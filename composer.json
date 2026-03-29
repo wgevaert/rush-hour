@@ -1,0 +1,25 @@
+{
+    "name": "wgevaert/rush-hour",
+    "description": "A solver for the rush hour game",
+    "version": "0.1.0",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Wout Gevaert",
+            "homepage": "https://github.com/wgevaert"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "RushHour\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=8.2",
+        "psr/log": "^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12.5",
+        "phpstan/phpstan": "^2.1"
+    }
+}
