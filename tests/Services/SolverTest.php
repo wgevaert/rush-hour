@@ -68,7 +68,17 @@ class SolverTest extends TestCase
                 "@@@@@@@@",
                 5
             ],
-
+            [
+                "@@@@@@@@\n" .
+                "@kkk.e.@\n" .
+                "@..j.e.@\n" .
+                "@rrj.ea.\n" .
+                "@ihhcca@\n" .
+                "@iggd.b@\n" .
+                "@fffd.b@\n" .
+                "@@@@@@@@",
+                31
+            ],
         ];
     }
 
