@@ -14,7 +14,10 @@ class Board
 {
     /** @var array<Car> $cars */
     private array $cars = [];
+
     private Coordinate $exit;
+    private ?Coordinate $translatedExit = null;
+
     private bool $carsSorted = true;
 
     public function __construct(
@@ -42,15 +45,41 @@ class Board
     public function isExit(Coordinate $exit): bool
     {
         if ($this->isOnBoard($exit)) {
-            return false;
+            return $this->isNearExit($exit);
         }
         $clamped = $this->clampForExit($exit);
         return $this->exit == $clamped;
     }
 
+    public function isNearExit(Coordinate $exit): bool
+    {
+        return $this->getExitOnBoard() == $exit;
+    }
+
     public function getExit(): Coordinate
     {
         return $this->exit;
+    }
+
+    public function getExitOnBoard(): Coordinate
+    {
+        if ( $this->translatedExit === null ) {
+            $translatedExit = clone $this->exit;
+            if ( $translatedExit->x === 0 ) {
+                $translatedExit->x++;
+            }
+            if ( $translatedExit->y === 0 ) {
+                $translatedExit->y++;
+            }
+            if ( $translatedExit->x === $this->boardSizeX ) {
+                $translatedExit->x--;
+            }
+            if ( $translatedExit->y === $this->boardSizeY ) {
+                $translatedExit->y--;
+            }
+            $this->translatedExit = $translatedExit;
+        }
+        return $this->translatedExit;
     }
 
     public function addCar(Car $car, string $name): void
