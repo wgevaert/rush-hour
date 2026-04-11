@@ -97,7 +97,6 @@
           opacity="0.5"
           stroke="orange"
           stroke-width="4"
-          @mousedown="startExitDrag"
         />
       </g>
     </svg>
@@ -274,11 +273,6 @@ function startDrag(event: MouseEvent, car: Car) {
 
   window.addEventListener("mousemove", onDrag as any);
   window.addEventListener("mouseup", stopDrag);
-}
-
-/* Placeholder - original had startExitDrag but no implementation; keep a no-op to avoid runtime errors */
-function startExitDrag() {
-  // intentionally left empty - exit indicator is not draggable in this UI
 }
 
 /* DRAG MOVE */
