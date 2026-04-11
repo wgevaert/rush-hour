@@ -23,7 +23,7 @@
         <article class="solution-box">
           <section class="solution-info">
             <p v-if="retrievingSolution">Retrieving Solution</p>
-            <p v-if="unsolvable">Could not solve puzzle. <template v-if="(unsolvable as any).reason">Reason: {{(unsolvable as any).reason}}</template></p>
+            <p v-if="unsolvable">Could not solve puzzle. <template v-if="unsolvable.reason">Reason: {{unsolvable.reason}}</template></p>
             <p v-if="solution"><template v-for="move in solution"><span class="solve-step" :class="move.currentMove ? 'active-solve-step' : ''"><span :style="{'color': move.color}">{{move.car}}</span>{{move.direction}}{{move.length}}</span></template></p>
           </section>
           <section v-if="solvingPuzzle" class="solution-buttons">
@@ -271,7 +271,7 @@ function startDrag(event: MouseEvent, car: Car) {
     y: car.y,
   };
 
-  window.addEventListener("mousemove", onDrag as any);
+  window.addEventListener("mousemove", onDrag);
   window.addEventListener("mouseup", stopDrag);
 }
 
@@ -336,7 +336,7 @@ function stopDrag() {
     checkWin();
   }
 
-  window.removeEventListener("mousemove", onDrag as any);
+  window.removeEventListener("mousemove", onDrag);
   window.removeEventListener("mouseup", stopDrag);
 }
 
