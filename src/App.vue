@@ -23,7 +23,7 @@
         <article class="solution-box">
           <section class="solution-info">
             <p v-if="retrievingSolution">Retrieving Solution</p>
-            <p v-if="unsolvable">Could not solve puzzle. <template v-if="unsolvable.reason">Reason: {{unsolvable.reason}}</template></p>
+            <p v-if="unsolvable">Could not solve puzzle. <template v-if="(unsolvable as any).reason">Reason: {{(unsolvable as any).reason}}</template></p>
             <p v-if="solution"><template v-for="move in solution"><span class="solve-step" :class="move.currentMove ? 'active-solve-step' : ''"><span :style="{'color': move.color}">{{move.car}}</span>{{move.direction}}{{move.length}}</span></template></p>
           </section>
           <section v-if="solvingPuzzle" class="solution-buttons">
@@ -70,7 +70,7 @@
       <!-- Cars -->
       <g>
         <rect
-          v-for="car in cars.values()"
+          v-for="car in Array.from(cars.values())"
           :key="car.id"
           :x="car.x * cellSize"
           :y="car.y * cellSize"
@@ -105,69 +105,71 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-
-const gridSizeX = ref(6);
-const gridSizeY = ref(6);
-const cellSize = 100;
-const boardSizeX = ref(gridSizeX.value * cellSize);
-const boardSizeY = ref(gridSizeY.value * cellSize);
-const viewBox = ref(`0 0 ${boardSizeX.value} ${boardSizeY.value}`)
-
-const editMode = ref(true);
+import { ref, computed, type Ref } from "vue";
 
 type CarOrientation = "horizontal" | "vertical";
 type MoveDirection = "up" | "right" | "down" | "left";
 
 interface Car {
-  id: number,
-  x: number,
-  y: number,
-  originalX: number,
-  originalY: number,
-  length: number,
-  orientation: CarOrientation,
-  color: string,
+  id: number;
+  x: number;
+  y: number;
+  originalX: number;
+  originalY: number;
+  length: number;
+  orientation: CarOrientation;
+  color: string;
 }
 
 interface Move {
-  string: string,
-  car: number,
-  color: string,
-  length: number,
-  direction: moveDirection,
-  currentMove: bool,
+  raw: string;
+  car: number;
+  color: string;
+  length: number;
+  direction: MoveDirection;
+  currentMove: boolean;
 }
 
 interface Unsolvable {
-  reason: string
+  reason: string;
 }
 
-const cars = ref(new Map());
-const selectedCar = ref(null);
-const targetCar = ref(null);
+/* Board basics */
+const gridSizeX = ref<number>(6);
+const gridSizeY = ref<number>(6);
+const cellSize = 100;
+const boardSizeX = computed(() => gridSizeX.value * cellSize);
+const boardSizeY = computed(() => gridSizeY.value * cellSize);
+const viewBox = computed(() => `0 0 ${boardSizeX.value} ${boardSizeY.value}`);
 
-const hasWon = ref(false);
-const solution = ref([]);
-const unsolvable = ref<Unsolvable|false>(false);
-const retrievingSolution = ref(false);
-const solvingPuzzle = ref(false);
-const playingSolution = ref(false);
-let solveAbortController;
+const editMode = ref<boolean>(true);
+
+/* State */
+const cars: Ref<Map<number, Car>> = ref(new Map());
+const selectedCar: Ref<Car | null> = ref(null);
+const targetCar: Ref<Car | null> = ref(null);
+
+const hasWon = ref<boolean>(false);
+const solution = ref<Move[]>([]);
+const unsolvable = ref<Unsolvable | false>(false);
+const retrievingSolution = ref<boolean>(false);
+const solvingPuzzle = ref<boolean>(false);
+const playingSolution = ref<boolean>(false);
+let solveAbortController: AbortController | null = null;
 
 let idCounter = 1;
 let carNameCounter = 0;
-let carNames = new Map();
+const carNames: Map<string, number> = new Map();
 
 /* Drag state */
-const dragging = ref(false);
-const dragCar = ref(null);
+const dragging = ref<boolean>(false);
+const dragCar: Ref<Car | null> = ref(null);
 const dragStart = ref({ x: 0, y: 0 });
 const carStart = ref({ x: 0, y: 0 });
 
 /* Grid */
 const cells = computed(() => {
-  const result = [];
+  const result: { id: number; x: number; y: number }[] = [];
   let id = 0;
   for (let y = 0; y < gridSizeY.value; y++) {
     for (let x = 0; x < gridSizeX.value; x++) {
@@ -186,69 +188,76 @@ function toggleEditMode() {
     resetBoard();
   }
   editMode.value = !editMode.value;
-  cars.value.values().forEach((car) => {
-    car.originalX = car.x, car.originalY = car.y
-  });
+  for (const car of cars.value.values()) {
+    car.originalX = car.x;
+    car.originalY = car.y;
+  }
   unsolvable.value = false;
 }
 
 /* Add car */
 function addCar() {
-  const newCar : Car = {
+  const newCar: Car = {
     id: idCounter++,
     x: 0,
     y: 0,
     originalX: 0,
     originalY: 0,
     length: 2,
-    orientation: 'horizontal',
+    orientation: "horizontal",
     color: randomColor(idCounter),
   };
   cars.value.set(newCar.id, newCar);
   selectCar(newCar);
 }
 
-function getStroke(car : Car): string {
+function getStroke(car: Car): string {
   if (targetCar.value && targetCar.value.id === car.id) {
-     return selectedCar.value?.id === car.id ? 'red' : 'darkred';
+    return selectedCar.value?.id === car.id ? "red" : "darkred";
   }
-  return  selectedCar.value?.id === car.id ? 'black' : 'none';
+  return selectedCar.value?.id === car.id ? "black" : "none";
 }
+
 /* Select */
-function selectCar(car : Car) {
+function selectCar(car: Car | null) {
   selectedCar.value = car;
 }
 
 function removeSelectedCar() {
+  if (!selectedCar.value) return;
   cars.value.delete(selectedCar.value.id);
-  if ( targetCar.value.id === selectedCar.value.id ) {
+  if (targetCar.value?.id === selectedCar.value.id) {
     targetCar.value = null;
   }
   selectedCar.value = null;
 }
 function rotateSelectedCar() {
-  selectedCar.value.orientation = selectedCar.value.orientation === 'horizontal' ? 'vertical' : 'horizontal';
+  if (!selectedCar.value) return;
+  selectedCar.value.orientation = selectedCar.value.orientation === "horizontal" ? "vertical" : "horizontal";
 }
 function lengthenSelectedCar() {
   const car = selectedCar.value;
+  if (!car) return;
   if (
-    (car.orientation === 'horizontal' && car.length + car.x < gridSizeX.value) ||
-    (car.orientation === 'vertical' && car.length + car.y < gridSizeY.value)
-  )
+    (car.orientation === "horizontal" && car.length + car.x < gridSizeX.value) ||
+    (car.orientation === "vertical" && car.length + car.y < gridSizeY.value)
+  ) {
     car.length++;
+  }
 }
 function shortenSelectedCar() {
-  if (selectedCar.value.length > 1)
-    selectedCar.value.length--;
+  const car = selectedCar.value;
+  if (!car) return;
+  if (car.length > 1) car.length--;
 }
 function makeSelectedTarget() {
+  if (!selectedCar.value) return;
   targetCar.value = selectedCar.value;
 }
 
 /* DRAG START */
-function startDrag(event, car) {
-  if (solvingPuzzle.value)
-    return;
+function startDrag(event: MouseEvent, car: Car) {
+  if (solvingPuzzle.value) return;
   dragging.value = true;
   dragCar.value = car;
   selectedCar.value = car;
@@ -263,12 +272,17 @@ function startDrag(event, car) {
     y: car.y,
   };
 
-  window.addEventListener("mousemove", onDrag);
+  window.addEventListener("mousemove", onDrag as any);
   window.addEventListener("mouseup", stopDrag);
 }
 
+/* Placeholder - original had startExitDrag but no implementation; keep a no-op to avoid runtime errors */
+function startExitDrag() {
+  // intentionally left empty - exit indicator is not draggable in this UI
+}
+
 /* DRAG MOVE */
-function onDrag(event) {
+function onDrag(event: MouseEvent) {
   if (!dragging.value || !dragCar.value) return;
 
   const dx = event.clientX - dragStart.value.x;
@@ -283,15 +297,14 @@ function onDrag(event) {
     newX = Math.round((carStart.value.x * cellSize + dx) / cellSize);
     newY = Math.round((carStart.value.y * cellSize + dy) / cellSize);
 
-    const maxX = gridSizeX.value - (car.orientation == 'horizontal' ? car.length : 1);
-    const maxY = gridSizeY.value - (car.orientation == 'vertical' ? car.length : 1);
+    const maxX = gridSizeX.value - (car.orientation === "horizontal" ? car.length : 1);
+    const maxY = gridSizeY.value - (car.orientation === "vertical" ? car.length : 1);
 
     newX = Math.max(0, Math.min(maxX, newX));
     newY = Math.max(0, Math.min(maxY, newY));
 
     car.x = newX;
     car.y = newY;
-
   } else {
     if (car.orientation === "horizontal") {
       const delta = Math.round(dx / cellSize);
@@ -317,52 +330,58 @@ function onDrag(event) {
 
 /* DRAG END */
 function stopDrag() {
-  if ( dragStart.value.x !== dragCar.value.x || dragStart.value.y !== dragCar.value.y ) {
-    invalidateSolution();
+  const lastDragCar = dragCar.value;
+  if (lastDragCar) {
+    if (carStart.value.x !== lastDragCar.x || carStart.value.y !== lastDragCar.y) {
+      invalidateSolution();
+    }
   }
   dragging.value = false;
   dragCar.value = null;
-  if ( targetCar.value === selectedCar.value ) {
+  if (targetCar.value && selectedCar.value && targetCar.value.id === selectedCar.value.id) {
     checkWin();
   }
 
-  window.removeEventListener("mousemove", onDrag);
+  window.removeEventListener("mousemove", onDrag as any);
   window.removeEventListener("mouseup", stopDrag);
 }
 
 /* Collision detection */
-function collides(car, newX, newY) {
-  return cars.value.values().some((other) => {
-    if (other.id === car.id) return false;
+function collides(car: Car, newX: number, newY: number): boolean {
+  for (const other of cars.value.values()) {
+    if (other.id === car.id) continue;
 
     const carCells = getCells(car, newX, newY);
     const otherCells = getCells(other, other.x, other.y);
 
-    return carCells.some((c1) =>
-      otherCells.some((c2) => c1.x === c2.x && c1.y === c2.y)
-    );
-  });
-}
-
-function getCells(car, x, y) {
-  const cells = [];
-  for (let i = 0; i < car.length; i++) {
-    if (car.orientation === "horizontal") {
-      cells.push({ x: x + i, y });
-    } else {
-      cells.push({ x, y: y + i });
+    for (const c1 of carCells) {
+      for (const c2 of otherCells) {
+        if (c1.x === c2.x && c1.y === c2.y) return true;
+      }
     }
   }
-  return cells;
+  return false;
+}
+
+function getCells(car: Car, x: number, y: number) {
+  const result: { x: number; y: number }[] = [];
+  for (let i = 0; i < car.length; i++) {
+    if (car.orientation === "horizontal") {
+      result.push({ x: x + i, y });
+    } else {
+      result.push({ x, y: y + i });
+    }
+  }
+  return result;
 }
 
 function checkWin() {
-  if ( !targetCar.value ) {
+  if (!targetCar.value) {
     hasWon.value = false;
     return;
   }
   const car = targetCar.value;
-  if (car.orientation === 'horizontal') {
+  if (car.orientation === "horizontal") {
     hasWon.value = car.x === 0;
   } else {
     hasWon.value = car.y === 0;
@@ -375,19 +394,18 @@ function dismissWin() {
 
 function resetBoard() {
   stopSolve();
-  cars.value.values().forEach((car) => {
+  for (const car of cars.value.values()) {
     car.x = car.originalX;
     car.y = car.originalY;
-  });
+  }
   hasWon.value = false;
   solution.value = [];
   unsolvable.value = false;
 }
 
-
 function clearBoard() {
-  if ( !cars.value.size || window.confirm("Are you sure that you want to clear all cars from the board?") ) {
-    cars.value = new Map;
+  if (!cars.value.size || window.confirm("Are you sure that you want to clear all cars from the board?")) {
+    cars.value = new Map();
     selectedCar.value = null;
     targetCar.value = null;
     idCounter = 1;
@@ -396,12 +414,10 @@ function clearBoard() {
 }
 
 function solvePuzzle() {
-  if (retrievingSolution.value)
-    return;
+  if (retrievingSolution.value) return;
 
   const serializedBoard = serializeBoard();
-  if ( !serializedBoard )
-    return;
+  if (!serializedBoard) return;
 
   retrievingSolution.value = true;
   solvingPuzzle.value = true;
@@ -413,89 +429,90 @@ function solvePuzzle() {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: new URLSearchParams({ action: 'solve', 'board': serializedBoard }),
+    body: new URLSearchParams({ action: "solve", board: serializedBoard }),
     signal: solveAbortController.signal,
-  }).then((response) => {
-    retrievingSolution.value = false;
-    response.json().then(
-      (parsedResponse) => handleSolveResponse(parsedResponse),
-      (failReason) => {
-        solvingPuzzle.value = false;
-        unsolvable.value = { reason: 'Endpoint json failure' };
-        console.error('Solve endpoint response could not be interpreted as json with reason %O', failReason);
+  })
+    .then((response) => {
+      retrievingSolution.value = false;
+      response.json().then(
+        (parsedResponse) => handleSolveResponse(parsedResponse),
+        (failReason) => {
+          solvingPuzzle.value = false;
+          unsolvable.value = { reason: "Endpoint json failure" };
+          console.error("Solve endpoint response could not be interpreted as json with reason %O", failReason);
+        }
+      );
+    })
+    .catch((failReason) => {
+      retrievingSolution.value = false;
+      solvingPuzzle.value = false;
+      if (failReason && failReason.name === "AbortError") {
+        unsolvable.value = { reason: "aborted" };
+      } else {
+        unsolvable.value = { reason: "Endpoint failure" };
+        console.error("Solve endpoint failed with reason %O", failReason);
       }
-    );
-
-  }, (failReason) => {
-    retrievingSolution.value = false;
-    solvingPuzzle.value = false;
-    if ( failReason === "user-abort" ) {
-      unsolvable.value = { reason: 'aborted' };
-    } else {
-      unsolvable.value = { reason: 'Endpoint failure' };
-      console.error('Solve endpoint failed with reason %O', failReason);
-    }
-  });
+    });
 }
 
-function serializeBoard() {
-  let serializedBoard = gridSizeX.value + ',' + gridSizeY.value + '$'
-  if ( !targetCar.value ) {
+function serializeBoard(): string | false {
+  let serializedBoard = `${gridSizeX.value},${gridSizeY.value}$`;
+  if (!targetCar.value) {
     unsolvable.value = { reason: "Cannot solve without objective" };
     return false;
   }
-  if ( targetCar.value.orientation === 'horizontal' ) {
-    serializedBoard = serializedBoard + '0,' + (targetCar.value.y + 1)
+  if (targetCar.value.orientation === "horizontal") {
+    serializedBoard = serializedBoard + "0," + (targetCar.value.y + 1);
   } else {
-    serializedBoard = serializedBoard + (targetCar.value.x + 1) + ',0';
+    serializedBoard = serializedBoard + (targetCar.value.x + 1) + ",0";
   }
-  serializedBoard = serializedBoard + ';';
-  const serializedCars = [];
+  serializedBoard = serializedBoard + ";";
+  const serializedCars: string[] = [];
 
   carNames.clear();
   carNameCounter = 0;
-  cars.value.forEach((car) => {
-    serializedCars.push(getCarName(car) + (car.x + 1)+ ',' + (car.y+1) + (car.orientation === 'horizontal' ? 'R' : 'D') + car.length);
-  });
-  serializedBoard = serializedBoard + serializedCars.join('|');
+  for (const car of cars.value.values()) {
+    serializedCars.push(getCarName(car) + (car.x + 1) + "," + (car.y + 1) + (car.orientation === "horizontal" ? "R" : "D") + car.length);
+  }
+  serializedBoard = serializedBoard + serializedCars.join("|");
   return serializedBoard;
 }
 
-function getCarName(car) {
-  const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  if ( targetCar.value && targetCar.value.id == car.id ) {
-
+function getCarName(car: Car): string {
+  const alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  if (targetCar.value && targetCar.value.id === car.id) {
     // The target car must be called 'r';
-    carNames.set('r', car.id);
-    return 'r';
+    carNames.set("r", car.id);
+    return "r";
   }
-  if ( carNameCounter < alphabet.length && alphabet.charAt(carNameCounter) === 'r' ) {
+  if (carNameCounter < alphabet.length && alphabet.charAt(carNameCounter) === "r") {
     // A car that is not the target car must not be called 'r';
     carNameCounter++;
   }
   let value = carNameCounter++;
-  let name = '';
+  let name = "";
   do {
     const remainder = value % alphabet.length;
     name = name + alphabet.charAt(remainder);
-    value = ( value - remainder ) / alphabet.length;
-  } while(value != 0);
+    value = (value - remainder) / alphabet.length;
+  } while (value != 0);
 
   carNames.set(name, car.id);
   return name;
 }
 
-function handleSolveResponse( response ) {
-  if ( !response.solved ) {
-    const reason = response.reason || ( response.error ? 'An error occurred' : 'Puzzle is not solvable' );
+function handleSolveResponse(response: any) {
+  if (!response.solved) {
+    const reason = response.reason || (response.error ? "An error occurred" : "Puzzle is not solvable");
     unsolvable.value = { reason };
+    solvingPuzzle.value = false;
     return;
   }
-  if ( response.moves ) {
-    for(const move of response.moves ) {
+  if (response.moves) {
+    for (const move of response.moves) {
       const parsedMove = parseMove(move);
-      if ( parsedMove ) {
-        solution.value.push( parsedMove );
+      if (parsedMove) {
+        solution.value.push(parsedMove);
       }
     }
   }
@@ -505,67 +522,71 @@ function handleSolveResponse( response ) {
   }
 }
 
-function parseMove( move : any ): Move {
-  if (typeof move !== 'string' && !move instanceof String) {
+function parseMove(move: any): Move | null {
+  if (typeof move !== "string" && !(move instanceof String)) {
     return null;
   }
-  const moveRegexp = /^([a-zA-Z]+)([0-9]+)([NESW])$/
-  const moveParts = move.match(moveRegexp);
-  if ( !moveParts[1] || !moveParts[2] || !moveParts[3] ) {
+  const moveRegexp = /^([a-zA-Z]+)([0-9]+)([NESW])$/;
+  const moveParts = (move as string).match(moveRegexp);
+  if (!moveParts || !moveParts[1] || !moveParts[2] || !moveParts[3]) {
     return null;
   }
-  if ( !carNames.has(moveParts[1]) ) {
+  if (!carNames.has(moveParts[1])) {
     return null;
   }
-  const carId = carNames.get(moveParts[1]);
-  if ( !cars.value.has(carId) ) {
+  const carId = carNames.get(moveParts[1])!;
+  if (!cars.value.has(carId)) {
     return null;
   }
-  const car = cars.value.get(carId);
   const moveLength = parseInt(moveParts[2], 10);
-  if ( isNaN( moveLength ) ) {
+  if (isNaN(moveLength)) {
     return null;
   }
-  const directionMap = {
-    N: 'up',
-    E: 'right',
-    S: 'down',
-    W: 'left',
+  const directionMap: Record<string, MoveDirection> = {
+    N: "up",
+    E: "right",
+    S: "down",
+    W: "left",
   };
+  const dir = directionMap[moveParts[3]];
+  if (!dir) return null;
+
   return {
-    string: move,
+    raw: move as string,
     car: carId,
-    color: cars.value.get(carId).color,
+    color: cars.value.get(carId)!.color,
     length: moveLength,
-    direction: directionMap[moveParts[3]],
+    direction: dir,
     currentMove: false,
   };
 }
+
 function playSolve() {
-  if ( playingSolution.value ) {
+  if (playingSolution.value) {
     return;
   }
   playingSolution.value = true;
   const currentStepIndex = solution.value.findIndex((move) => move.currentMove) ?? 0;
-  playSolveSteps(currentStepIndex);
+  playSolveSteps(currentStepIndex >= 0 ? currentStepIndex : 0);
 }
-function playSolveSteps( currentStepIndex : number ) {
-  if (playingSolution.value === false ) {
+function playSolveSteps(currentStepIndex: number) {
+  if (playingSolution.value === false) {
     // We are paused or something.
     return;
   }
-  if(solution.value.length <= currentStepIndex) {
-    console.error( "solution index out of bounds" );
+  if (solution.value.length <= currentStepIndex) {
+    console.error("solution index out of bounds");
     return;
   }
   const currentMove = solution.value[currentStepIndex];
   const movingCar = cars.value.get(currentMove.car);
+  if (!movingCar) return;
   selectCar(movingCar);
   moveSelectedCar(currentMove.length, currentMove.direction);
   setTimeout(() => {
     currentMove.currentMove = false;
     const nextMove = solution.value[currentStepIndex + 1];
-    if ( nextMove ) {
+    if (nextMove) {
       nextMove.currentMove = true;
       playSolveSteps(currentStepIndex + 1);
     } else {
@@ -578,30 +599,39 @@ function pauseSolve() {
   playingSolution.value = false;
 }
 
-function moveSelectedCar(length : number, direction : MoveDirection) {
-  switch(direction) {
-    case 'up': return moveSelectedCarUp(length);
-    case 'right': return moveSelectedCarRight(length);
-    case 'down': return moveSelectedCarDown(length);
-    case 'left': return moveSelectedCarLeft(length);
+function moveSelectedCar(length: number, direction: MoveDirection) {
+  switch (direction) {
+    case "up":
+      return moveSelectedCarUp(length);
+    case "right":
+      return moveSelectedCarRight(length);
+    case "down":
+      return moveSelectedCarDown(length);
+    case "left":
+      return moveSelectedCarLeft(length);
   }
 }
-function moveSelectedCarUp(length : number) {
+function moveSelectedCarUp(length: number) {
+  if (!selectedCar.value) return;
   selectedCar.value.y -= length;
 }
-function moveSelectedCarDown(length : number) {
+function moveSelectedCarDown(length: number) {
+  if (!selectedCar.value) return;
   selectedCar.value.y += length;
 }
-function moveSelectedCarLeft(length : number) {
+function moveSelectedCarLeft(length: number) {
+  if (!selectedCar.value) return;
   selectedCar.value.x -= length;
 }
-function moveSelectedCarRight(length : number) {
+function moveSelectedCarRight(length: number) {
+  if (!selectedCar.value) return;
   selectedCar.value.x += length;
 }
 
 function stopSolve() {
   if (solveAbortController) {
-    solveAbortController.abort('user-abort');
+    solveAbortController.abort();
+    solveAbortController = null;
   }
   retrievingSolution.value = false;
   solvingPuzzle.value = false;
@@ -613,10 +643,9 @@ function invalidateSolution() {
 }
 
 function randomColor(id: number): string {
-  const angle = (id * 42.5)%360;
+  const angle = (id * 42.5) % 360;
   return `hsl(${angle}, 70%, 60%)`;
 }
-
 </script>
 
 <style>
