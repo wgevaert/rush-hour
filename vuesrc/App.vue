@@ -7,7 +7,7 @@
         {{ editMode ? "Play puzzle" : "Edit puzzle" }}
       </button>
       <template v-if="editMode">
-        <h3> Edit puzzle</h3>
+        <h3>Edit puzzle</h3>
         <button @click="addCar">Add Car</button>
         <button @click="clearBoard">Clear Board</button>
         <button :disabled="!selectedCar" @click="rotateSelectedCar">Rotate Car</button>
@@ -17,7 +17,7 @@
         <button :disabled="!selectedCar" @click="makeSelectedTarget">Make Car Objective</button>
       </template>
       <template v-if="!editMode">
-        <h3> Play puzzle</h3>
+        <h3>Play puzzle</h3>
         <button @click="resetBoard">Reset</button>
         <button @click="solvePuzzle">Solve</button>
         <article class="solution-box">
@@ -584,7 +584,7 @@ function playSolveSteps(currentStepIndex: number) {
       nextMove.currentMove = true;
       playSolveSteps(currentStepIndex + 1);
     } else {
-      playingSolution.value = false;
+      stopSolve();
       checkWin();
     }
   }, 300);
@@ -629,6 +629,7 @@ function stopSolve() {
   }
   retrievingSolution.value = false;
   solvingPuzzle.value = false;
+  playingSolution.value = false;
   unsolvable.value = false;
   solution.value = [];
 }
