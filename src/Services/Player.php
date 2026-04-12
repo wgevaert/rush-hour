@@ -144,10 +144,6 @@ class Player implements LoggerAwareInterface
     private function isDrivable(Coordinate $tile, ?string $carNameToIgnore = null): bool
     {
         if (!$this->board->isOnBoard($tile)) {
-            $this->logger?->debug(
-                'Tile is maybe exit',
-                [ 'board' => $this->board, 'tile' => $tile, 'name' => $carNameToIgnore ]
-            );
             return $this->board->isExit($tile);
         }
         foreach ($this->board->getCars() as $carName => $car) {
@@ -155,10 +151,6 @@ class Player implements LoggerAwareInterface
                 continue;
             }
             if (in_array($tile, $car->getCoordinates())) {
-                $this->logger?->debug(
-                    'Tile is part of other car',
-                    [ 'other car' => $carName, 'board' => $this->board, 'tile' => $tile, 'name' => $carNameToIgnore ]
-                );
                 return false;
             }
         }

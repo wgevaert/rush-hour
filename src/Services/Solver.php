@@ -59,10 +59,10 @@ class Solver implements LoggerAwareInterface
             }
             $newPlayers = [];
             foreach ($players as $player) {
-                if ($player->puzzleSolved()) {
-                    return $player;
-                }
                 foreach ($this->doPossibleMoves($player) as $newPlayer) {
+                    if ($newPlayer->puzzleSolved()) {
+                        return $newPlayer;
+                    }
                     $newPlayers[] = $newPlayer;
                 }
             }

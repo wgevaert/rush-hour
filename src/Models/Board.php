@@ -71,10 +71,10 @@ class Board
             if ($translatedExit->y === 0) {
                 $translatedExit->y++;
             }
-            if ($translatedExit->x === $this->boardSizeX) {
+            if ($translatedExit->x === $this->boardSizeX + 1) {
                 $translatedExit->x--;
             }
-            if ($translatedExit->y === $this->boardSizeY) {
+            if ($translatedExit->y === $this->boardSizeY + 1) {
                 $translatedExit->y--;
             }
             $this->translatedExit = $translatedExit;
