@@ -1,9 +1,7 @@
-
 # PHP related files
 vendor/
 composer.lock
 .phpunit.result.cache
-package-lock.json
 
 # Logs
 logs
