@@ -1,6 +1,6 @@
 <?php
 
-namespace RushHour\Test\Services;
+namespace RushHour\Test\Serialization;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;

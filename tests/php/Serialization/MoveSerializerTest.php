@@ -1,6 +1,6 @@
 <?php
 
-namespace RushHour\Test\Services;
+namespace RushHour\Test\Serialization;
 
 use PHPUnit\Framework\TestCase;
 use RushHour\Models\Move;
