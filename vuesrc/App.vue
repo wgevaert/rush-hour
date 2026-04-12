@@ -642,5 +642,3 @@ function randomColor(id: number): string {
   return `hsl(${angle}, 70%, 60%)`;
 }
 </script>
-
-<style src="style.css"/>
