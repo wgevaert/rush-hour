@@ -38,7 +38,8 @@ class BoardDrawingParser implements LoggerAwareInterface
 
     public function boardFromDrawing(string $drawing): Board
     {
-        $this->lines = explode("\n", $drawing);
+        $lines = explode("\n", $drawing);
+        $this->lines = $this->addBorderIfMissing($lines);
         $sizeX = strlen($this->lines[0]) - 2;
         $sizeY = count($this->lines) - 2;
 
@@ -53,6 +54,35 @@ class BoardDrawingParser implements LoggerAwareInterface
         $this->lines = [];
 
         return $board;
+    }
+
+    private function addBorderIfMissing(array $lines): array
+    {
+        if (count($lines) === 0) {
+            throw new UserErrorException("Empty board provided");
+        }
+        $firstLine = trim($lines[0]);
+        if ($firstLine[0] === self::BORDER) {
+            return $lines;
+        }
+        $innerWidth = strlen($firstLine);
+        $outerWidth = $innerWidth + 2;
+        $border = str_repeat(self::BORDER, $outerWidth);
+        $newLines = [ $border ];
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ( strlen($line) === 0 ) {
+                continue;
+            }
+            if (strlen($line) !== $innerWidth) {
+                throw new UserErrorException("All lines must have the same length");
+            }
+            $line = str_pad($line, $outerWidth, BoardDrawingParser::BORDER, STR_PAD_BOTH);
+            $newLines[] = $line;
+        }
+        $newLines[] = $border;
+
+        return $newLines;
     }
 
     private function setExit(Board $board): void
@@ -70,7 +100,7 @@ class BoardDrawingParser implements LoggerAwareInterface
      * @param int $sizeX
      * @param int $sizeY
      */
-    private function getExit(Board $board): Coordinate
+    private function getExit(Board $board): ?Coordinate
     {
         $sizeX = $board->getBottomRight()->x;
         $sizeY = $board->getBottomRight()->y;
@@ -115,15 +145,14 @@ class BoardDrawingParser implements LoggerAwareInterface
         }
         $objectiveCar = $board->getCar($objectiveCarName);
         if ($objectiveCar->direction === CarDirection::RIGHT) {
-            if ( $sizeX === 6 && $sizeY === 6 && $objectiveCar->position->y === 4) {
+            if ($sizeX === 6 && $sizeY === 6 && $objectiveCar->position->y === 4) {
                 // In the standard 6x6 game, the exit is at 7,4, so we put it there if possible.
                 return new Coordinate(7, 4);
             }
-            return new Coordinate(0, $objectiveCar->position->y);
+            return new Coordinate($sizeX + 1, $objectiveCar->position->y);
         }
-        return new Coordinate($objectiveCar->position->x, 0);
+        return new Coordinate($objectiveCar->position->x, $sizeY + 1);
     }
-
 
     /**
      * Reads all the cars from the drawing
