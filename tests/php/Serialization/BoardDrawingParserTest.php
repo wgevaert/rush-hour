@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use RushHour\Models\Board;
 use RushHour\Models\CarDirection;
 use RushHour\Models\Coordinate;
-use RushHour\Services\BoardDrawingParser;
+use RushHour\Serialization\BoardDrawingParser;
 
 class BoardDrawingParserTest extends TestCase
 {

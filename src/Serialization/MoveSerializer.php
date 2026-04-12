@@ -1,6 +1,6 @@
 <?php
 
-namespace RushHour\Services;
+namespace RushHour\Serialization;
 
 use RushHour\Models\Move;
 use RushHour\Models\MoveDirection;

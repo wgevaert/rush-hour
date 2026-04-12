@@ -4,9 +4,9 @@ namespace RushHour\Test\Serialization;
 
 use PHPUnit\Framework\TestCase;
 use RushHour\Models\Board;
-use RushHour\Services\BoardDrawer;
-use RushHour\Services\BoardDrawingParser;
-use RushHour\Services\DrawingBoardSerializer;
+use RushHour\Serialization\BoardDrawer;
+use RushHour\Serialization\BoardDrawingParser;
+use RushHour\Serialization\DrawingBoardSerializer;
 
 class DrawingBoardSerializerTest extends TestCase
 {

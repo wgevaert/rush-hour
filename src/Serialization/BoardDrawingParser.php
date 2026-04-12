@@ -1,6 +1,6 @@
 <?php
 
-namespace RushHour\Services;
+namespace RushHour\Serialization;
 
 use LogicException;
 use RushHour\Exception\SerializedException;

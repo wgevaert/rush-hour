@@ -9,7 +9,7 @@ use RushHour\Models\Board;
 use RushHour\Models\Car;
 use RushHour\Models\CarDirection;
 use RushHour\Models\Coordinate;
-use RushHour\Services\CarPositionBoardSerializer;
+use RushHour\Serialization\CarPositionBoardSerializer;
 
 class CarPositionBoardSerializerTest extends TestCase
 {

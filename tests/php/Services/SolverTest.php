@@ -11,7 +11,7 @@ use RushHour\Models\Coordinate;
 use RushHour\Models\Move;
 use RushHour\Models\MoveDirection;
 use RushHour\Exception\UnsolvableException;
-use RushHour\Services\BoardDrawingParser;
+use RushHour\Serialization\BoardDrawingParser;
 use RushHour\Services\CarPositionBoardHasher;
 use RushHour\Services\Player;
 use RushHour\Services\Solver;

@@ -9,7 +9,7 @@ use RushHour\Models\CarDirection;
 use RushHour\Models\Coordinate;
 use RushHour\Models\Move;
 use RushHour\Models\MoveDirection;
-use RushHour\Services\BoardDrawingParser;
+use RushHour\Serialization\BoardDrawingParser;
 use RushHour\Services\Player;
 
 class PlayerTest extends TestCase

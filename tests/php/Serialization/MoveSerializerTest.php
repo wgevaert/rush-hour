@@ -5,7 +5,7 @@ namespace RushHour\Test\Serialization;
 use PHPUnit\Framework\TestCase;
 use RushHour\Models\Move;
 use RushHour\Models\MoveDirection;
-use RushHour\Services\MoveSerializer;
+use RushHour\Serialization\MoveSerializer;
 
 class MoveSerializerTest extends TestCase
 {

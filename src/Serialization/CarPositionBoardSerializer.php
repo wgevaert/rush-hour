@@ -1,6 +1,6 @@
 <?php
 
-namespace RushHour\Services;
+namespace RushHour\Serialization;
 
 use RushHour\Exception\SerializedException;
 use RushHour\Models\Board;

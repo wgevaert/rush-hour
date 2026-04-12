@@ -7,7 +7,7 @@ use RushHour\Models\Board;
 use RushHour\Models\Car;
 use RushHour\Models\CarDirection;
 use RushHour\Models\Coordinate;
-use RushHour\Services\BoardDrawer;
+use RushHour\Serialization\BoardDrawer;
 
 class BoardDrawerTest extends TestCase
 {

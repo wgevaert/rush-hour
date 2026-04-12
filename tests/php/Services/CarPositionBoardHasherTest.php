@@ -1,6 +1,6 @@
 <?php
 
-namespace RushHour\Test\Serialization;
+namespace RushHour\Test\Services;
 
 use PHPUnit\Framework\TestCase;
 use RushHour\Models\Board;
