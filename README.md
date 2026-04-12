@@ -1,6 +1,6 @@
 # A Rush Hour Web-app
 
-Includes a solver.
+Includes a solver and a visualiser.
 
 ## Usage:
 ### Via Command Line Interface:
@@ -22,3 +22,4 @@ GGHHEF
 ### Via Web:
 1. Set up your web server to execute `public_html/api.php`
 2. Access the api via the web
+
