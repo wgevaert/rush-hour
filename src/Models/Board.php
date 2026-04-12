@@ -63,18 +63,18 @@ class Board
 
     public function getExitOnBoard(): Coordinate
     {
-        if ( $this->translatedExit === null ) {
+        if ($this->translatedExit === null) {
             $translatedExit = clone $this->exit;
-            if ( $translatedExit->x === 0 ) {
+            if ($translatedExit->x === 0) {
                 $translatedExit->x++;
             }
-            if ( $translatedExit->y === 0 ) {
+            if ($translatedExit->y === 0) {
                 $translatedExit->y++;
             }
-            if ( $translatedExit->x === $this->boardSizeX ) {
+            if ($translatedExit->x === $this->boardSizeX) {
                 $translatedExit->x--;
             }
-            if ( $translatedExit->y === $this->boardSizeY ) {
+            if ($translatedExit->y === $this->boardSizeY) {
                 $translatedExit->y--;
             }
             $this->translatedExit = $translatedExit;

@@ -6,10 +6,14 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;
 use RushHour\Models\Board;
 use RushHour\Models\Move;
-use RushHour\Services\BoardDrawer;
-use RushHour\Services\MoveSerializer;
+use RushHour\Serialization\BoardDrawer;
+use RushHour\Serialization\MoveSerializer;
 use Stringable;
 
+/**
+ * A quickly implemented logger that writes to a hard-coded file path.
+ * Not for production use.
+ */
 class FileLogger implements LoggerInterface
 {
     use LoggerTrait;

@@ -3,6 +3,8 @@
 namespace RushHour\Serialization;
 
 use LogicException;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use RushHour\Exception\SerializedException;
 use RushHour\Models\Board;
 use RushHour\Models\Car;
@@ -23,8 +25,10 @@ use RushHour\Models\Coordinate;
  * - A car "r" at 3,1 of length 2 looking down
  * - A car "a" at 2,3 of length 3 looking right
  */
-class BoardDrawingParser
+class BoardDrawingParser implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
     public const BORDER = '@';
     public const EMPTY = '.';
 
@@ -38,15 +42,25 @@ class BoardDrawingParser
         $sizeY = count($this->lines) - 2;
 
         $board = new Board($sizeX, $sizeY);
-        $board->setExit($this->getExit($sizeX, $sizeY));
 
         foreach ($this->getCars() as $carName => $car) {
             $board->addCar($car, $carName);
         }
 
+        $this->setExit($board);
+
         $this->lines = [];
 
         return $board;
+    }
+
+    private function setExit(Board $board): void
+    {
+        $exit = $this->getExit($board);
+        if ($exit === null) {
+            $exit = $this->guessExit($board);
+        }
+        $board->setExit($exit);
     }
 
     /**
@@ -55,8 +69,11 @@ class BoardDrawingParser
      * @param int $sizeX
      * @param int $sizeY
      */
-    private function getExit(int $sizeX, int $sizeY): Coordinate
+    private function getExit(Board $board): Coordinate
     {
+        $sizeX = $board->getBottomRight()->x;
+        $sizeY = $board->getBottomRight()->y;
+
         for ($x = 0; $x < $sizeX + 2; $x++) {
             if ($this->lines[ 0 ][ $x ] !== self::BORDER) {
                 return new Coordinate($x, 0);
@@ -73,8 +90,39 @@ class BoardDrawingParser
                 return new Coordinate($sizeX + 1, $y);
             }
         }
-        throw new SerializedException("No exit found in drawing");
+        return null;
     }
+
+    /**
+     * Guesses the exit location based on the position of the goal car
+     *
+     * The exit is always in line with the goal car if that exists.
+     * If the board is 6x6 and the exit can be on 7,4 (the de facto standard position), put it there,
+     * Otherwise put it at x-coordinate 0 or y-coordinate 0 in line with the goal car.
+     */
+    private function guessExit(Board $board): Coordinate
+    {
+        $sizeX = $board->getBottomRight()->x;
+        $sizeY = $board->getBottomRight()->y;
+
+        $objectiveCarName = Player::GOAL_CAR;
+        if (!$board->hasCar($objectiveCarName)) {
+            // Exit in normal game is at the far-X border with y-coordinate 4.
+            $exitX = $sizeX + 1;
+            $exitY = min(4, $sizeY);
+            return new Coordinate($exitX, $exitY);
+        }
+        $objectiveCar = $board->getCar($objectiveCarName);
+        if ($objectiveCar->direction === CarDirection::RIGHT) {
+            if ( $sizeX === 6 && $sizeY === 6 && $objectiveCar->position->y === 4) {
+                // In the standard 6x6 game, the exit is at 7,4, so we put it there if possible.
+                return new Coordinate(7, 4);
+            }
+            return new Coordinate(0, $objectiveCar->position->y);
+        }
+        return new Coordinate($objectiveCar->position->x, 0);
+    }
+
 
     /**
      * Reads all the cars from the drawing
@@ -132,23 +180,25 @@ class BoardDrawingParser
 
     private function getCarFacingDown(Coordinate $position): Car
     {
-        $name = $this->getCharAt( $position->x, $position->y );
+        $name = $this->getCharAt($position->x, $position->y);
         $length = 2;
-        while ($this->getCharAt( $position->x, $position->y + $length ) === $name) {
+        while ($this->getCharAt($position->x, $position->y + $length) === $name) {
             $length++;
         }
 
         return new Car($position, CarDirection::DOWN, $length);
     }
 
-    private function getCharAt( int $x, int $y ): string {
-        if ( $this->outOfBounds( $x, $y ) ) {
+    private function getCharAt(int $x, int $y): string
+    {
+        if ($this->outOfBounds($x, $y)) {
             return self::BORDER;
         }
         return $this->lines[$y][$x];
     }
 
-    private function outOfBounds( int $x, int $y ): bool {
-        return $x < 0 || $y < 0 || $y >= count( $this->lines ) || $x >= strlen( $this->lines[$y] );
+    private function outOfBounds(int $x, int $y): bool
+    {
+        return $x < 0 || $y < 0 || $y >= count($this->lines) || $x >= strlen($this->lines[$y]);
     }
 }

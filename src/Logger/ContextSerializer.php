@@ -4,8 +4,8 @@ namespace RushHour\Logger;
 
 use RushHour\Models\Board;
 use RushHour\Models\Move;
-use RushHour\Services\BoardDrawer;
-use RushHour\Services\MoveSerializer;
+use RushHour\Serialization\BoardDrawer;
+use RushHour\Serialization\MoveSerializer;
 
 class ContextSerializer
 {

@@ -2,6 +2,8 @@
 
 namespace RushHour\Serialization;
 
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use RushHour\Exception\SerializedException;
 use RushHour\Models\Board;
 use RushHour\Models\Car;
@@ -12,8 +14,10 @@ use LogicException;
 /**
  * A serializer that gives a string consisting of board size, board exit location, and cars with name.
  */
-class CarPositionBoardSerializer implements BoardSerializer
+class CarPositionBoardSerializer implements BoardSerializer, LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
     public const SEPARATOR_SIZE = '$';
     public const SEPARATOR_EXIT = ';';
     public const SEPARATOR_COORDINATE = ',';

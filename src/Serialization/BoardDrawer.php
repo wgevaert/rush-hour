@@ -4,6 +4,8 @@ namespace RushHour\Serialization;
 
 use LengthException;
 use LogicException;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 use RushHour\Exception\SerializedException;
 use RushHour\Models\Board;
 use RushHour\Models\Car;
@@ -13,8 +15,10 @@ use RushHour\Models\Coordinate;
 /**
  * Can make a drawing from a board.
  */
-class BoardDrawer
+class BoardDrawer implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
     public const BORDER = '@';
     public const EMPTY = '.';
 
@@ -28,9 +32,10 @@ class BoardDrawer
         return implode("\n", $boardArray);
     }
 
-    public function setCarChar( ?string $char = null ) {
-        if ( $char !== null && strlen( $char ) !== 1 ) {
-            throw new LengthException( 'A char is a string of length 1' );
+    public function setCarChar(?string $char = null)
+    {
+        if ($char !== null && strlen($char) !== 1) {
+            throw new LengthException('A char is a string of length 1');
         }
         $this->carChar = $char;
     }
@@ -116,7 +121,7 @@ class BoardDrawer
 
     private function makeSingleChar(string $name): string
     {
-        if ( $this->carChar !== null ) {
+        if ($this->carChar !== null) {
             return $this->carChar;
         }
         return $name[0];
