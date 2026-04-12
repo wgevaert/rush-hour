@@ -2,24 +2,18 @@
 
 namespace RushHour;
 
-use RushHour\Web\ApiHandler;
-use RushHour\Logger\FileLogger;
+use RushHour\Web\Entrypoint;
 
 require_once __DIR__ . "/../vendor/autoload.php";
 
-$method = $_SERVER['REQUEST_METHOD'];
-$params = match ($method) {
-    'POST' => $_POST,
-    'GET' => $_GET,
-    default => throw new UnexpectedValueException('Invalid method', 405),
-};
+$entrypoint = new Entrypoint();
+$entrypoint->setPost($_POST);
+$entrypoint->setGet($_GET);
+$entrypoint->setServer($_SERVER);
 
-$logger = new FileLogger;
-$apiHandler = new ApiHandler();
-$apiHandler->setLogger( $logger );
-$apiHandler->setParams( $params );
-
-$response = $apiHandler->handleRequest();
-header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: http://localhost:5173');
-echo json_encode( $response );
+$response = $entrypoint->run();
+foreach ($response->getHeaders() as $header) {
+    header($header);
+}
+http_response_code($response->getCode());
+echo $response->getBody();

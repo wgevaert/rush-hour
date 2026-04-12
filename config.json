@@ -1,0 +1,5 @@
+{
+    "cors-origins-regexps": [
+        "|http://localhost:[0-9]+|"
+    ]
+}

@@ -2,8 +2,9 @@
 
 namespace RushHour\Exception;
 
-use UnexpectedValueException;
-
-class UnsolvableException extends UnexpectedValueException
+/**
+ * Thrown when the user provided an unsolvable puzzle.
+ */
+class UnsolvableException extends UserErrorException
 {
 }

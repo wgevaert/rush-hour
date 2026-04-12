@@ -2,10 +2,14 @@
 
 namespace RushHour\Web;
 
-use UnexpectedValueException;
+use RushHour\Exception\UserErrorException;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
 
-class EndpointFactory
+class EndpointFactory implements LoggerAwareInterface
 {
+    use LoggerAwareTrait;
+
     /**
      * @param array<string, mixed> $params
      * @return ApiEndpoint The endpoint corresponding to params['action']
@@ -13,13 +17,16 @@ class EndpointFactory
     public function getEndpoint(array $params): ApiEndpoint
     {
         if (!isset($params['action'])) {
-            throw new UnexpectedValueException('Missing parameter action');
+            throw new UserErrorException('Missing parameter action');
         }
         if (!is_string($params['action'])) {
-            throw new UnexpectedValueException('Parameter action should be string');
+            throw new UserErrorException('Parameter action should be string');
         }
         $action = $params['action'];
         $endpoint = $this->makeEndpointForAction($action);
+        if ($this->logger !== null) {
+            $endpoint->setLogger($this->logger);
+        }
         return $endpoint;
     }
 
@@ -28,7 +35,7 @@ class EndpointFactory
         return match ($action) {
             'solve' => new SolveEndpoint(),
             'draw' => new DrawEndpoint(),
-            default => throw new UnexpectedValueException('unknown action'),
+            default => throw new UserErrorException('Unknown value provided for action'),
         };
     }
 }

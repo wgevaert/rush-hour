@@ -5,13 +5,12 @@ namespace RushHour\Web;
 use UnexpectedValueException;
 use Psr\Log\LoggerAwareTrait;
 use RushHour\Models\Board;
-use RushHour\Services\BoardDrawer;
-use RushHour\Services\BoardDrawingParser;
-use RushHour\Services\BoardSerializer;
-use RushHour\Services\CarPositionBoardSerializer;
+use RushHour\Serialization\BoardDrawer;
+use RushHour\Serialization\BoardDrawingParser;
+use RushHour\Serialization\BoardSerializer;
+use RushHour\Serialization\CarPositionBoardSerializer;
 use RushHour\Services\CarPositionBoardHasher;
-use RushHour\Services\DrawingBoardSerializer;
-use RushHour\Services\Solver;
+use RushHour\Serialization\DrawingBoardSerializer;
 
 abstract class BoardEndpoint implements ApiEndpoint
 {
@@ -45,7 +44,7 @@ abstract class BoardEndpoint implements ApiEndpoint
     {
         return match ($serialization) {
             self::SERIALIZATION_CARPOSITION => new CarPositionBoardSerializer(),
-            self::SERIALIZATION_DRAWING => new DrawingBoardSerializer(new BoardDrawer, new BoardDrawingParser),
+            self::SERIALIZATION_DRAWING => new DrawingBoardSerializer(new BoardDrawer(), new BoardDrawingParser()),
             default => throw new UnexpectedValueException("Unknown serialization"),
         };
     }
