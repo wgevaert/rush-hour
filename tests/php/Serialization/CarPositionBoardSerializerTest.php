@@ -22,7 +22,8 @@ class CarPositionBoardSerializerTest extends TestCase
         $this->assertSame($boardString, $string);
     }
 
-    public static function serializedBoardsDataProvider(): array {
+    public static function serializedBoardsDataProvider(): array
+    {
         return [
           ['5,5$1,0;r1,1D2|b2,2R2'],
           ["6,6$0,2;a1,3D2|r0,2R2"],

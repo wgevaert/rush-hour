@@ -10,8 +10,9 @@ use RushHour\Serialization\DrawingBoardSerializer;
 
 class DrawingBoardSerializerTest extends TestCase
 {
-    private function getSerializer(): DrawingBoardSerializer {
-        return new DrawingBoardSerializer( new BoardDrawer, new BoardDrawingParser );
+    private function getSerializer(): DrawingBoardSerializer
+    {
+        return new DrawingBoardSerializer(new BoardDrawer(), new BoardDrawingParser());
     }
 
     public function testReadAndDraw(): void

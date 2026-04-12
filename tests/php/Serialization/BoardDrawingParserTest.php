@@ -23,20 +23,20 @@ class BoardDrawingParserTest extends TestCase
 
         $board = $parser->boardFromDrawing($boardDrawing);
 
-        $this->assertEquals(new Coordinate(6,3), $board->getBottomRight());
-        $this->assertEquals( new Coordinate( 3,4 ), $board->getExit() );
+        $this->assertEquals(new Coordinate(6, 3), $board->getBottomRight());
+        $this->assertEquals(new Coordinate(3, 4), $board->getExit());
 
-        $this->assertTrue( $board->hasCar( 'r' ) );
-        $rCar = $board->getCar( 'r' );
-        $this->assertEquals( new Coordinate( 3,1 ), $rCar->position );
-        $this->assertEquals( CarDirection::DOWN, $rCar->direction );
-        $this->assertEquals( 2, $rCar->length );
+        $this->assertTrue($board->hasCar('r'));
+        $rCar = $board->getCar('r');
+        $this->assertEquals(new Coordinate(3, 1), $rCar->position);
+        $this->assertEquals(CarDirection::DOWN, $rCar->direction);
+        $this->assertEquals(2, $rCar->length);
 
-        $this->assertTrue( $board->hasCar( 'a' ) );
-        $aCar = $board->getCar( 'a' );
-        $this->assertEquals( new Coordinate( 2,3 ), $aCar->position );
-        $this->assertEquals( CarDirection::RIGHT, $aCar->direction );
-        $this->assertEquals( 3, $aCar->length );
+        $this->assertTrue($board->hasCar('a'));
+        $aCar = $board->getCar('a');
+        $this->assertEquals(new Coordinate(2, 3), $aCar->position);
+        $this->assertEquals(CarDirection::RIGHT, $aCar->direction);
+        $this->assertEquals(3, $aCar->length);
     }
 
     public function testBoardFromDrawingCarInExitNorth(): void
@@ -52,13 +52,13 @@ class BoardDrawingParserTest extends TestCase
 
         $board = $parser->boardFromDrawing($boardDrawing);
 
-        $this->assertEquals( new Coordinate( 4,0 ), $board->getExit() );
+        $this->assertEquals(new Coordinate(4, 0), $board->getExit());
 
-        $this->assertTrue( $board->hasCar( 'r' ) );
-        $rCar = $board->getCar( 'r' );
-        $this->assertEquals( new Coordinate( 4,0 ), $rCar->position );
-        $this->assertEquals( CarDirection::DOWN, $rCar->direction );
-        $this->assertEquals( 2, $rCar->length );
+        $this->assertTrue($board->hasCar('r'));
+        $rCar = $board->getCar('r');
+        $this->assertEquals(new Coordinate(4, 0), $rCar->position);
+        $this->assertEquals(CarDirection::DOWN, $rCar->direction);
+        $this->assertEquals(2, $rCar->length);
     }
 
     public function testBoardFromDrawingCarInExitEast(): void
@@ -74,13 +74,13 @@ class BoardDrawingParserTest extends TestCase
 
         $board = $parser->boardFromDrawing($boardDrawing);
 
-        $this->assertEquals( new Coordinate( 7,2 ), $board->getExit() );
+        $this->assertEquals(new Coordinate(7, 2), $board->getExit());
 
-        $this->assertTrue( $board->hasCar( 'r' ) );
-        $rCar = $board->getCar( 'r' );
-        $this->assertEquals( new Coordinate( 6,2 ), $rCar->position );
-        $this->assertEquals( CarDirection::RIGHT, $rCar->direction );
-        $this->assertEquals( 2, $rCar->length );
+        $this->assertTrue($board->hasCar('r'));
+        $rCar = $board->getCar('r');
+        $this->assertEquals(new Coordinate(6, 2), $rCar->position);
+        $this->assertEquals(CarDirection::RIGHT, $rCar->direction);
+        $this->assertEquals(2, $rCar->length);
     }
 
     public function testBoardFromDrawingCarInExitSouth(): void
@@ -96,13 +96,13 @@ class BoardDrawingParserTest extends TestCase
 
         $board = $parser->boardFromDrawing($boardDrawing);
 
-        $this->assertEquals( new Coordinate( 3,4 ), $board->getExit() );
+        $this->assertEquals(new Coordinate(3, 4), $board->getExit());
 
-        $this->assertTrue( $board->hasCar( 'r' ) );
-        $rCar = $board->getCar( 'r' );
-        $this->assertEquals( new Coordinate( 3,3 ), $rCar->position );
-        $this->assertEquals( CarDirection::DOWN, $rCar->direction );
-        $this->assertEquals( 2, $rCar->length );
+        $this->assertTrue($board->hasCar('r'));
+        $rCar = $board->getCar('r');
+        $this->assertEquals(new Coordinate(3, 3), $rCar->position);
+        $this->assertEquals(CarDirection::DOWN, $rCar->direction);
+        $this->assertEquals(2, $rCar->length);
     }
 
     public function testBoardFromDrawingCarInExitWest(): void
@@ -118,13 +118,13 @@ class BoardDrawingParserTest extends TestCase
 
         $board = $parser->boardFromDrawing($boardDrawing);
 
-        $this->assertEquals( new Coordinate( 0,2 ), $board->getExit() );
+        $this->assertEquals(new Coordinate(0, 2), $board->getExit());
 
-        $this->assertTrue( $board->hasCar( 'r' ) );
-        $rCar = $board->getCar( 'r' );
-        $this->assertEquals( new Coordinate( 0,2 ), $rCar->position );
-        $this->assertEquals( CarDirection::RIGHT, $rCar->direction );
-        $this->assertEquals( 2, $rCar->length );
+        $this->assertTrue($board->hasCar('r'));
+        $rCar = $board->getCar('r');
+        $this->assertEquals(new Coordinate(0, 2), $rCar->position);
+        $this->assertEquals(CarDirection::RIGHT, $rCar->direction);
+        $this->assertEquals(2, $rCar->length);
     }
 
     public function testBoardFromDrawingComplicatedBoard(): void
@@ -143,6 +143,6 @@ class BoardDrawingParserTest extends TestCase
 
         $board = $parser->boardFromDrawing($boardDrawing);
 
-        $this->assertCount( 12, $board->getCars() );
+        $this->assertCount(12, $board->getCars());
     }
 }
