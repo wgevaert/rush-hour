@@ -20,6 +20,7 @@ GGHHEF
 ```
 
 ### Via Web:
-1. Set up your web server to execute `public_html/api.php`
-2. Access the api via the web
+1. Build the front-end app: `npm install` and `npm run build`.
+2. Set up your web server to serve from `dist/`
+3. Access the interactive solver at index.html and the solver api at `api.php`
 
