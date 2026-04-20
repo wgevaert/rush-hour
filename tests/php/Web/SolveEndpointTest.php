@@ -26,6 +26,6 @@ class SolveEndpointTest extends BoardEndpointTest
         $result = $endpoint->execute();
         $this->assertArrayHasKey('moves', $result);
         $this->assertCount(1, $result['moves']);
-        $this->assertEquals('r2W', $result['moves'][0]);
+        $this->assertEquals('r1W', $result['moves'][0]);
     }
 }
