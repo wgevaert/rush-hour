@@ -21,7 +21,7 @@ GGHHEF
 
 ### Via Web:
 1. Build the front-end app: `npm install` and `npm run build`.
-2. Set up your web server to serve from `dist/`
-3. Copy the `config.json.sample` file to `config.json`, and adjust as necessary.
-4. Access the interactive solver at index.html and the solver api at `api.php`
+2. Copy the `config.json.sample` file to `config.json`, and adjust as necessary.
+3. Set up your web server to serve from `dist/`, and correctly handle php files.
+4. Access the interactive solver at `index.html` and the solver api at `api.php`
 
