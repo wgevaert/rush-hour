@@ -32,7 +32,7 @@ class FileLogger implements LoggerInterface
     public function log($level, string|Stringable $message, array $context = []): void
     {
         file_put_contents(
-            __DIR__ . "/../../../LOGFILE",
+            __DIR__ . "/../../../../LOGFILE",
             $this->formatLogLine($level, (string) $message, $context),
             FILE_APPEND
         );

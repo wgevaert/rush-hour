@@ -16,7 +16,7 @@ class Config
     public function loadConfig(?string $filePath = null): array
     {
         if ($filePath === null) {
-            $filePath = __DIR__ . '/../../config.json';
+            $filePath = __DIR__ . '/../../../config.json';
         }
         if (!file_exists($filePath)) {
             throw new RuntimeException("Config file not found at $filePath");

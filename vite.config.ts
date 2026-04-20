@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'vuesrc'),
+      '@': path.resolve(__dirname, 'src/js'),
     },
   },
   test: {

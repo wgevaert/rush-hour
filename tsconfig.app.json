@@ -14,13 +14,13 @@
     "noUncheckedSideEffectImports": true,
     "paths": {
       "@/*": [
-        "./vuesrc/*"
+        "./src/js/*"
       ]
     }
   },
   "include": [
-    "vuesrc/**/*.ts",
-    "vuesrc/**/*.tsx",
-    "vuesrc/**/*.vue"
+    "src/js/**/*.ts",
+    "src/js/**/*.tsx",
+    "src/js/**/*.vue"
   ]
 }
