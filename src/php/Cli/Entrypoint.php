@@ -46,7 +46,7 @@ class Entrypoint
 
     private function getEndpoint(): CommandLineEndpoint
     {
-        $endpoint = match($this->options['action'] ?? 'solve') {
+        $endpoint = match ($this->options['action'] ?? 'solve') {
             'solve' => new SolveEndpoint(),
             default => new SolveEndpoint(),
         };

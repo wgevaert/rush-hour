@@ -30,7 +30,7 @@ class FileReadWriteIO implements CommandLineInputOutput
 
     public function readLine(): ?string
     {
-        if ( $this->input === null) {
+        if ($this->input === null) {
             return null;
         }
         if (feof($this->input)) {
@@ -41,7 +41,7 @@ class FileReadWriteIO implements CommandLineInputOutput
 
     public function writeLine(string $line): void
     {
-        if ( $this->output === null) {
+        if ($this->output === null) {
             return;
         }
         fwrite($this->output, $line . PHP_EOL);
@@ -49,7 +49,7 @@ class FileReadWriteIO implements CommandLineInputOutput
 
     public function writeError(string $line): void
     {
-        if ( $this->errorOutput === null) {
+        if ($this->errorOutput === null) {
             return;
         }
         fwrite($this->errorOutput, $line . PHP_EOL);

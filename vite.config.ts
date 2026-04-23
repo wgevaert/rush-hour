@@ -7,10 +7,11 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src/js'),
+      '@': path.resolve(__dirname, 'src/js/'),
     },
   },
   test: {
     environment: 'jsdom',
+    restoreMocks: true,
   },
 })

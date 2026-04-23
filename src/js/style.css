@@ -271,3 +271,12 @@ button {
 .fade-leave-to {
   opacity: 0;
 }
+
+.app dialog::backdrop {
+  background-color: var(--social-bg)
+}
+
+.app dialog textarea {
+  min-height: 5em;
+  min-width: 5em;
+}

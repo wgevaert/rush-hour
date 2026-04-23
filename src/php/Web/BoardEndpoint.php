@@ -2,8 +2,8 @@
 
 namespace RushHour\Web;
 
-use UnexpectedValueException;
 use Psr\Log\LoggerAwareTrait;
+use RushHour\Exception\UserErrorException;
 use RushHour\Models\Board;
 use RushHour\Serialization\BoardDrawer;
 use RushHour\Serialization\BoardDrawingParser;
@@ -24,7 +24,7 @@ abstract class BoardEndpoint implements ApiEndpoint
     public function setParameters(array $params): void
     {
         if (!isset($params['board'])) {
-            throw new UnexpectedValueException("parameter board is required for this endpoint");
+            throw new UserErrorException("parameter board is required for this endpoint");
         }
         $board = $params['board'];
 
@@ -45,7 +45,7 @@ abstract class BoardEndpoint implements ApiEndpoint
         return match ($serialization) {
             self::SERIALIZATION_CARPOSITION => new CarPositionBoardSerializer(),
             self::SERIALIZATION_DRAWING => new DrawingBoardSerializer(new BoardDrawer(), new BoardDrawingParser()),
-            default => throw new UnexpectedValueException("Unknown serialization"),
+            default => throw new UserErrorException("Unknown serialization"),
         };
     }
 }

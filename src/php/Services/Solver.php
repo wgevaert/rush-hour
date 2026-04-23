@@ -52,7 +52,11 @@ class Solver implements LoggerAwareInterface
     private function findMovesToSolvedState(): Player
     {
         $this->registerBoard($this->startingBoard, false);
-        $players = [ $this->makeStartingPlayer() ];
+        $startingPlayer = $this->makeStartingPlayer();
+        if ($startingPlayer->puzzleSolved()) {
+            return $startingPlayer;
+        }
+        $players = [ $startingPlayer ];
         while (true) {
             if (empty($players)) {
                 throw new UnsolvableException("Board is not solvable");

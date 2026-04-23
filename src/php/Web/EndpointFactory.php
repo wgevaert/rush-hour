@@ -2,9 +2,14 @@
 
 namespace RushHour\Web;
 
-use RushHour\Exception\UserErrorException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use RushHour\Exception\UserErrorException;
+use RushHour\Serialization\BoardDrawer;
+use RushHour\Serialization\BoardDrawingParser;
+use RushHour\Serialization\DrawingBoardSerializer;
+use RushHour\Storage\SerializerStorage;
+use RushHour\Storage\Storage;
 
 class EndpointFactory implements LoggerAwareInterface
 {
@@ -35,7 +40,31 @@ class EndpointFactory implements LoggerAwareInterface
         return match ($action) {
             'solve' => new SolveEndpoint(),
             'draw' => new DrawEndpoint(),
+            'storeBoard' => $this->getStoreEndpoint(),
+            'fetchBoard' => $this->getFetchEndpoint(),
             default => throw new UserErrorException('Unknown value provided for action'),
         };
+    }
+
+    private function getStoreEndpoint(): StoreEndpoint
+    {
+        $endpoint = new StoreEndpoint();
+        $endpoint->setStorage($this->getStorage());
+        return $endpoint;
+    }
+
+    private function getFetchEndpoint(): FetchEndpoint
+    {
+        $endpoint = new FetchEndpoint();
+        $endpoint->setStorage($this->getStorage());
+        return $endpoint;
+    }
+
+    private function getStorage(): Storage
+    {
+        $serializer = new DrawingBoardSerializer(new BoardDrawer(), new BoardDrawingParser());
+        $storage = new SerializerStorage();
+        $storage->setSerializer($serializer);
+        return $storage;
     }
 }

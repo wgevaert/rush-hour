@@ -2,7 +2,6 @@
 
 namespace RushHour\Serialization;
 
-use LogicException;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use RushHour\Exception\SerializedException;
@@ -59,7 +58,7 @@ class BoardDrawingParser implements LoggerAwareInterface
     private function addBorderIfMissing(array $lines): array
     {
         if (count($lines) === 0) {
-            throw new UserErrorException("Empty board provided");
+            throw new SerializedException("Empty board provided");
         }
         $firstLine = trim($lines[0]);
         if ($firstLine[0] === self::BORDER) {
@@ -71,11 +70,11 @@ class BoardDrawingParser implements LoggerAwareInterface
         $newLines = [ $border ];
         foreach ($lines as $line) {
             $line = trim($line);
-            if ( strlen($line) === 0 ) {
+            if (strlen($line) === 0) {
                 continue;
             }
             if (strlen($line) !== $innerWidth) {
-                throw new UserErrorException("All lines must have the same length");
+                throw new SerializedException("All lines must have the same length");
             }
             $line = str_pad($line, $outerWidth, BoardDrawingParser::BORDER, STR_PAD_BOTH);
             $newLines[] = $line;

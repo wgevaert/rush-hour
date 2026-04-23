@@ -1,24 +1,36 @@
 import { ref, computed, type Ref } from "vue";
 import { fetchSolution } from "@/composables/solveApi"
+import { fetchBoard, postSaveBoard } from "@/composables/boardApi"
+import { getUrlParam } from "@/composables/httpApi";
 
 export type CarOrientation = "horizontal" | "vertical";
 export type MoveDirection = "up" | "right" | "down" | "left";
 
-export interface Car {
+export interface BaseCar {
     id: number;
     x: number;
     y: number;
-    originalX: number;
-    originalY: number;
     length: number;
     orientation: CarOrientation;
+}
+
+export interface Car extends BaseCar {
+    originalX: number;
+    originalY: number;
     color: string;
+}
+
+export function getCarLengthX(car: BaseCar): number {
+    return car.orientation === 'horizontal' ? car.length : 1;
+}
+
+export function getCarLengthY(car: BaseCar): number {
+    return car.orientation === 'vertical' ? car.length : 1;
 }
 
 export interface Move {
     raw: string;
     car: number;
-    color: string;
     length: number;
     direction: MoveDirection;
     currentMove: boolean;
@@ -28,18 +40,28 @@ export interface Unsolvable {
     reason: string;
 }
 
+export function instanceOfUnsolvable(something: any): something is Unsolvable {
+    return 'reason' in something;
+}
+
+export interface BoardExchange {
+    gridSizeX: number,
+    gridSizeY: number,
+    cars: Map<number, BaseCar>,
+    targetCar: BaseCar,
+}
+
 export function useRushHour() {
     /* Board basics */
     const gridSizeX = ref<number>(6);
     const gridSizeY = ref<number>(6);
-    const cellSize = 100;
-    const boardSizeX = computed(() => gridSizeX.value * cellSize);
-    const boardSizeY = computed(() => gridSizeY.value * cellSize);
-    const viewBox = computed(() => `0 0 ${boardSizeX.value} ${boardSizeY.value}`);
+    const cellSize = ref<number>(100);
+    const boardSizeX = computed(() => gridSizeX.value * cellSize.value);
+    const boardSizeY = computed(() => gridSizeY.value * cellSize.value);
 
     const editMode = ref<boolean>(true);
+    const saveLoadMessage = ref<string>("");
 
-    /* State */
     const cars: Ref<Map<number, Car>> = ref(new Map());
     const selectedCar: Ref<Car | null> = ref(null);
     const targetCar: Ref<Car | null> = ref(null);
@@ -50,17 +72,14 @@ export function useRushHour() {
     const retrievingSolution = ref<boolean>(false);
     const solvingPuzzle = ref<boolean>(false);
     const playingSolution = ref<boolean>(false);
-    let solveAbortController: AbortController | null = null;
 
+    let solveAbortController: AbortController | null = null;
     let idCounter = 1;
 
-    /* Drag state */
-    const dragging = ref<boolean>(false);
-    const dragCar: Ref<Car | null> = ref(null);
     const dragStart = ref({ x: 0, y: 0 });
-    const carStart = ref({ x: 0, y: 0 });
+    const carDragStart: Ref<BaseCar | null> = ref(null);
+    const saveLoadInput: Ref<string> = ref("");
 
-    /* Grid */
     const cells = computed(() => {
         const result: { id: number; x: number; y: number }[] = [];
         let id = 0;
@@ -68,13 +87,17 @@ export function useRushHour() {
             for (let x = 0; x < gridSizeX.value; x++) {
                 result.push({
                     id: id++,
-                    x: x * cellSize,
-                    y: y * cellSize,
+                    x: x * cellSize.value,
+                    y: y * cellSize.value,
                 });
             }
         }
         return result;
     });
+
+    function sleep(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
 
     function toggleEditMode() {
         if (!editMode.value) {
@@ -88,30 +111,18 @@ export function useRushHour() {
         unsolvable.value = false;
     }
 
-    /* Add car */
     function addCar() {
-        const newCar: Car = {
+        const newCar: Car = makeCar({
             id: idCounter++,
             x: 0,
             y: 0,
-            originalX: 0,
-            originalY: 0,
             length: 2,
             orientation: "horizontal",
-            color: randomColor(idCounter),
-        };
+        });
         cars.value.set(newCar.id, newCar);
         selectCar(newCar);
     }
 
-    function getStroke(car: Car): string {
-        if (targetCar.value && targetCar.value.id === car.id) {
-            return selectedCar.value?.id === car.id ? "red" : "darkred";
-        }
-        return selectedCar.value?.id === car.id ? "black" : "none";
-    }
-
-    /* Select */
     function selectCar(car: Car | null) {
         selectedCar.value = car;
     }
@@ -152,20 +163,32 @@ export function useRushHour() {
         targetCar.value = selectedCar.value;
     }
 
+    function getExitX() : number {
+        return targetCar.value?.orientation === 'horizontal' ? 0 : targetCar.value?.x || 0;
+    }
+
+    function getExitY() : number {
+        return targetCar.value?.orientation === 'vertical' ? 0 : targetCar.value?.y || 0;
+    }
+
     function startDrag(event: MouseEvent, car: Car) {
+        // Allowing drag when a solution has been calculated would invalidate the solution
+        // So we don't allow dragging in that case.
         if (solvingPuzzle.value) return;
-        dragging.value = true;
-        dragCar.value = car;
-        selectedCar.value = car;
+
+        selectCar(car);
 
         dragStart.value = {
             x: event.clientX,
             y: event.clientY,
         };
 
-        carStart.value = {
+        carDragStart.value = {
+            id: car.id,
             x: car.x,
             y: car.y,
+            orientation: car.orientation,
+            length: car.length
         };
 
         window.addEventListener("mousemove", onDrag);
@@ -173,60 +196,16 @@ export function useRushHour() {
     }
 
     function onDrag(event: MouseEvent) {
-        if (!dragging.value || !dragCar.value) return;
+        if (!dragStart.value || !carDragStart.value) return;
 
-        const dx = event.clientX - dragStart.value.x;
-        const dy = event.clientY - dragStart.value.y;
+        const dx = Math.round((event.clientX - dragStart.value.x) / cellSize.value);
+        const dy = Math.round((event.clientY - dragStart.value.y) / cellSize.value);
 
-        const car = dragCar.value;
-
-        let newX = carStart.value.x;
-        let newY = carStart.value.y;
-
-        if (editMode.value) {
-            newX = Math.round((carStart.value.x * cellSize + dx) / cellSize);
-            newY = Math.round((carStart.value.y * cellSize + dy) / cellSize);
-
-            const maxX = gridSizeX.value - (car.orientation === "horizontal" ? car.length : 1);
-            const maxY = gridSizeY.value - (car.orientation === "vertical" ? car.length : 1);
-
-            newX = Math.max(0, Math.min(maxX, newX));
-            newY = Math.max(0, Math.min(maxY, newY));
-
-            car.x = newX;
-            car.y = newY;
-        } else {
-            if (car.orientation === "horizontal") {
-                const delta = Math.round(dx / cellSize);
-                newX = carStart.value.x + delta;
-
-                newX = Math.max(0, Math.min(gridSizeX.value - car.length, newX));
-
-                if (!collides(car, newX, car.y)) {
-                    car.x = newX;
-                }
-            } else {
-                const delta = Math.round(dy / cellSize);
-                newY = carStart.value.y + delta;
-
-                newY = Math.max(0, Math.min(gridSizeY.value - car.length, newY));
-
-                if (!collides(car, car.x, newY)) {
-                    car.y = newY;
-                }
-            }
-        }
+        moveSelectedCarFromStartByDisplacement(carDragStart.value, dx, dy);
     }
 
     function stopDrag() {
-        const lastDragCar = dragCar.value;
-        if (lastDragCar) {
-            if (carStart.value.x !== lastDragCar.x || carStart.value.y !== lastDragCar.y) {
-                invalidateSolution();
-            }
-        }
-        dragging.value = false;
-        dragCar.value = null;
+        carDragStart.value = null;
         if (targetCar.value && selectedCar.value && targetCar.value.id === selectedCar.value.id) {
             checkWin();
         }
@@ -235,29 +214,71 @@ export function useRushHour() {
         window.removeEventListener("mouseup", stopDrag);
     }
 
-    function collides(car: Car, newX: number, newY: number): boolean {
+    function moveSelectedCarFromStartByDisplacement(carStart: BaseCar, dx: number, dy: number) {
+        if (!selectedCar.value) return;
+
+        const maxX = gridSizeX.value - getCarLengthX(carStart);
+        const maxY = gridSizeY.value - getCarLengthY(carStart);
+
+        let newX = Math.max(0, Math.min(maxX, carStart.x + dx));
+        let newY = Math.max(0, Math.min(maxY, carStart.y + dy));
+
+        if (editMode.value) {
+            // No collision checks in edit mode
+            selectedCar.value.x = newX;
+            selectedCar.value.y = newY;
+        } else {
+            // In play mode, only move the car in the allowed direction
+            if (carStart.orientation === "horizontal") {
+                newY = carStart.y;
+            } else {
+                newX = carStart.x;
+            }
+            if (!collides(carStart, newX, newY)) {
+                selectedCar.value.x = newX;
+                selectedCar.value.y = carStart.y;
+            }
+        }
+    }
+
+    function collides(car: BaseCar, newX: number, newY: number): boolean {
+        const carTrajectoryCells = getTrajectoryCells(car, newX, newY);
         for (const other of cars.value.values()) {
             if (other.id === car.id) continue;
 
-            const carCells = getCells(car, newX, newY);
-            const otherCells = getCells(other, other.x, other.y);
+            const otherCells = getCells(other);
 
-            for (const c1 of carCells) {
+            for (const c1 of carTrajectoryCells) {
                 for (const c2 of otherCells) {
-                    if (c1.x === c2.x && c1.y === c2.y) return true;
+                    if (c1.x === c2.x && c1.y === c2.y) {
+                        return true;
+                    }
                 }
             }
         }
         return false;
     }
 
-    function getCells(car: Car, x: number, y: number) {
+    function getCells(car: Car) {
         const result: { x: number; y: number }[] = [];
-        for (let i = 0; i < car.length; i++) {
-            if (car.orientation === "horizontal") {
-                result.push({ x: x + i, y });
-            } else {
-                result.push({ x, y: y + i });
+        for (let x = 0; x < getCarLengthX(car); x++) {
+            for (let y = 0; y < getCarLengthY(car); y++) {
+                result.push({ x, y });
+            }
+        }
+        return result;
+    }
+
+    function getTrajectoryCells(car: BaseCar, newX: number, newY: number) {
+        const result: { x: number; y: number }[] = [];
+        const startX: number = Math.min(newX, car.x),
+            endX: number = Math.max(newX, car.x) + getCarLengthX(car),
+            startY: number = Math.min(newY, car.y),
+            endY: number = Math.max(newY, car.y) + getCarLengthY(car);
+
+        for (let x = startX; x <= endX; x++) {
+            for (let y = startY; y <= endY; y++) {
+                result.push({ x, y })
             }
         }
         return result;
@@ -269,11 +290,7 @@ export function useRushHour() {
             return;
         }
         const car = targetCar.value;
-        if (car.orientation === "horizontal") {
-            hasWon.value = car.x === 0;
-        } else {
-            hasWon.value = car.y === 0;
-        }
+        hasWon.value = car.x === getExitX() && car.y === getExitY();
     }
 
     function dismissWin() {
@@ -287,8 +304,6 @@ export function useRushHour() {
             car.y = car.originalY;
         }
         hasWon.value = false;
-        solution.value = [];
-        unsolvable.value = false;
     }
 
     function clearBoard() {
@@ -301,7 +316,67 @@ export function useRushHour() {
         }
     }
 
-    function solvePuzzle() {
+    async function saveBoard() {
+        if (!targetCar.value) {
+            return;
+        }
+        const board: BoardExchange = {
+            gridSizeX: gridSizeX.value,
+            gridSizeY: gridSizeY.value,
+            cars: cars.value,
+            targetCar: targetCar.value,
+        };
+        try {
+            const saveResult = await postSaveBoard(board);
+            if (saveResult !== null) {
+                saveLoadInput.value = saveResult || "";
+            }
+            saveLoadMessage.value = "Saved under id " + saveResult;
+        } catch (failReason) {
+            saveLoadMessage.value = "failure";
+        }
+    }
+
+    async function loadBoard() {
+        const retrievedBoard: BoardExchange | null = await fetchBoard(saveLoadInput.value);
+        if (retrievedBoard === null) {
+            saveLoadMessage.value = 'Could not load board';
+            return;
+        }
+        clearBoard();
+        initBoard(retrievedBoard);
+    }
+
+    async function loadBoardFromUrl() {
+        const board = getUrlParam('board');
+        if (board === null) {
+            return;
+        }
+        saveLoadInput.value = board;
+        await loadBoard();
+    }
+
+    function initBoard(board: BoardExchange): void {
+        gridSizeX.value = board.gridSizeX;
+        gridSizeY.value = board.gridSizeY;
+
+        for (const car of board.cars.values()) {
+            cars.value.set(car.id, makeCar(car));
+            idCounter = Math.max(idCounter, car.id+1);
+        }
+        targetCar.value = cars.value.get(board.targetCar.id) || null;
+    }
+
+    function makeCar(car: BaseCar): Car {
+        return {
+            ...car,
+            originalX: car.x,
+            originalY: car.y,
+            color: getColor(car.id),
+        };
+    }
+
+    async function solvePuzzle() {
         if (retrievingSolution.value) return;
 
         retrievingSolution.value = true;
@@ -309,64 +384,88 @@ export function useRushHour() {
         unsolvable.value = false;
         solution.value = [];
         solveAbortController = new AbortController()
-        fetchSolution(
-            gridSizeX.value,
-            gridSizeY.value,
-            cars.value,
-            targetCar.value,
-            solveAbortController.signal
-        ).then((result) => {
+        try {
+            if (!targetCar.value) {
+                throw { reason: "Cannot solve without objective" };
+            }
+            const boardExchange: BoardExchange = {
+                gridSizeX: gridSizeX.value,
+                gridSizeY: gridSizeY.value,
+                cars: cars.value,
+                targetCar: targetCar.value,
+            };
+            const result = await fetchSolution(
+                boardExchange,
+                solveAbortController.signal
+            )
             retrievingSolution.value = false;
             if (typeof result === 'object' && Array.isArray(result)) {
                 solution.value = result;
             } else {
                 console.error("Result is not an array");
             }
-        },
-            (reason) => {
-                retrievingSolution.value = false;
-                solvingPuzzle.value = false;
-                if (reason.reason) {
-                    unsolvable.value = { reason: reason.reason };
-                }
+        } catch (reason: any) {
+            retrievingSolution.value = false;
+            solvingPuzzle.value = false;
+            if (instanceOfUnsolvable(reason)) {
+                unsolvable.value = { reason: reason.reason };
+            } else {
+                unsolvable.value = { reason: 'An unknown error occurred' }
+                console.error("Solve failed with reason %O", reason);
             }
-        );
+        }
     }
 
     function playSolve() {
         if (playingSolution.value) {
+            // If already playing, don't play twice.
             return;
         }
         playingSolution.value = true;
-        const currentStepIndex = solution.value.findIndex((move) => move.currentMove) ?? 0;
-        playSolveSteps(currentStepIndex >= 0 ? currentStepIndex : 0);
+
+        playSolveSteps();
     }
-    function playSolveSteps(currentStepIndex: number) {
-        if (playingSolution.value === false) {
-            // We are paused or something.
-            return;
-        }
-        if (solution.value.length <= currentStepIndex) {
-            console.error("solution index out of bounds");
-            return;
-        }
+
+    function playSolveStep(): boolean {
+        const currentStepIndex: number = solution.value.findIndex((move) => move.currentMove) ?? -1;
         const currentMove = solution.value[currentStepIndex];
+
+        if (!currentMove) {
+            return false;
+        }
         const movingCar = cars.value.get(currentMove.car);
-        if (!movingCar) return;
+        if (!movingCar) {
+            console.error("Move references unknown car");
+            return false;
+        }
+
         selectCar(movingCar);
         moveSelectedCar(currentMove.length, currentMove.direction);
-        setTimeout(() => {
-            currentMove.currentMove = false;
-            const nextMove = solution.value[currentStepIndex + 1];
-            if (nextMove) {
-                nextMove.currentMove = true;
-                playSolveSteps(currentStepIndex + 1);
-            } else {
-                stopSolve();
-                checkWin();
-            }
-        }, 300);
+        currentMove.currentMove = false;
+        if (solution.value.length > currentStepIndex + 1) {
+            solution.value[currentStepIndex + 1].currentMove = true;
+
+            return true;
+        }
+        stopSolve();
+        checkWin();
+        return false;
     }
+
+    async function playSolveSteps() {
+        while (playSolveStep()) {
+            await sleep(300);
+            if (playingSolution.value === false) {
+                // We are paused or something.
+                return;
+            }
+        }
+    }
+    function playSingleSolveStep() {
+        pauseSolve();
+        playSolveStep();
+    }
+
     function pauseSolve() {
         playingSolution.value = false;
     }
@@ -411,11 +510,8 @@ export function useRushHour() {
         unsolvable.value = false;
         solution.value = [];
     }
-    function invalidateSolution() {
-        solvingPuzzle.value = false;
-    }
 
-    function randomColor(id: number): string {
+    function getColor(id: number): string {
         const angle = (id * 42.5) % 360;
         return `hsl(${angle}, 70%, 60%)`;
     }
@@ -424,7 +520,6 @@ export function useRushHour() {
         cellSize,
         boardSizeX,
         boardSizeY,
-        viewBox,
         editMode,
         hasWon,
         solution,
@@ -436,9 +531,14 @@ export function useRushHour() {
         selectedCar,
         cars,
         targetCar,
+        saveLoadInput,
+        saveBoard,
+        loadBoard,
+        getExitX,
+        getExitY,
+        loadBoardFromUrl,
         toggleEditMode,
         addCar,
-        getStroke,
         selectCar,
         removeSelectedCar,
         rotateSelectedCar,
@@ -451,6 +551,7 @@ export function useRushHour() {
         clearBoard,
         solvePuzzle,
         playSolve,
+        playSingleSolveStep,
         pauseSolve,
         stopSolve,
     }
