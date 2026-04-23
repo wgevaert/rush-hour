@@ -60,8 +60,8 @@
 
     <svg
       class="board"
-      :width="boardSizeX"
-      :height="boardSizeY"
+      :width="svgWidth"
+      :height="svgHeight"
       :viewBox="viewBox"
     >
       <!-- Grid -->
@@ -96,33 +96,9 @@
         />
       </g>
 
-      <!-- EXIT -->
-      <defs>
-        <!-- A marker to be used as an arrowhead -->
-        <marker
-          id="arrow"
-          viewBox="0 0 10 10"
-          refX="5"
-          refY="5"
-          markerWidth="6"
-          markerHeight="6"
-          orient="auto-start-reverse">
-          <path d="M 0 0 L 10 5 L 0 10 z" />
-        </marker>
-      </defs>
-      <g id="exit">
-        <line
-          v-if="targetCar"
-          :x1="(getExitX() + targetCar?.orientation === 'horizontal' ? 1/4 : 1/2 )*cellSize"
-          :x2="(getExitX() + targetCar?.orientation === 'horizontal' ? 3/4 : 1/2 )*cellSize"
-          :y1="(getExitY() + targetCar?.orientation === 'vertical' ? 3/4 : 1/2 )*cellSize"
-          :y2="(getExitY() + targetCar?.orientation === 'vertical' ? 3/4 : 1/2 )*cellSize"
-          orient="auto"
-          fill="gold"
-          opacity="0.5"
-          stroke="orange"
-          marker-end="url(#arrow)"
-        />
+      <!-- OUTLINE -->
+      <g>
+        <path :d="outlinePath"  fill="none" stroke="#888" opacity="0.5" :stroke-width="2*svgMargin()" stroke-linecap="square"/>
       </g>
     </svg>
   </div>
@@ -171,7 +147,29 @@ function onSaveLoadModalClick(event: PointerEvent) {
   }
 }
 
-const viewBox = computed(() => `0 0 ${boardSizeX.value} ${boardSizeY.value}`);
+function svgMargin() {
+  return 0.08*cellSize.value;
+}
+const svgWidth = computed(() => boardSizeX.value+2*svgMargin())
+const svgHeight = computed(() => boardSizeX.value+2*svgMargin())
+const viewBox = computed(() => {
+  return `${-1*svgMargin()} ${-1*svgMargin()} ${svgWidth.value} ${svgHeight.value}`
+});
+
+/**
+ * An svg path d value that goes around the board with a hole at the exit, i.e. in line with the targetCar
+ */
+const outlinePath = computed(() => {
+  if ( targetCar.value ) {
+    if ( targetCar.value.orientation === 'horizontal') {
+      return `M 0 ${getExitY()*cellSize.value} V 0 H ${boardSizeX.value} V ${boardSizeY.value} H 0 V ${(getExitY() + 1)*cellSize.value}`;
+    }
+    if ( targetCar.value.orientation === 'vertical') {
+      return `M ${(getExitX() + 1)*cellSize.value} 0 H ${boardSizeX.value} V ${boardSizeY.value} H 0 V 0 H ${getExitX()*cellSize.value}`;
+    }
+  }
+  return `M 0 0 H ${boardSizeX.value} V ${boardSizeY.value} H 0 Z`;
+})
 
 const {
   cellSize,
@@ -214,5 +212,4 @@ const {
 } = useRushHour();
 
 loadBoardFromUrl();
-console.log(getExitX(),getExitY());
 </script>

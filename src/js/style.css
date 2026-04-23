@@ -186,12 +186,7 @@ code {
 }
 
 .board {
-  border: 2px solid #333;
   margin-left: 10px;
-}
-
-#exit {
-  pointer-events: none;
 }
 
 .solution-info {
