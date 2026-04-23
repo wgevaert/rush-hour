@@ -26,7 +26,7 @@ GGHHEF
 4. Access the interactive solver at `index.html` and the solver api at `api.php`
 
 #### api.php
-The api accepts form-encoded input and gives json-encoded output. Each api call requires a parameter 'action', which determines what will happen:
+The api accepts url-encoded input and gives json-encoded output. Each api call requires a parameter 'action', which determines what will happen:
 
 | Action | Extra parameters     | Description                                                                         |
 | ------ | -------------------- | ------------------------------------------------------------------------------------|
