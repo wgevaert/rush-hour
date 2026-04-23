@@ -29,6 +29,7 @@ GGHHEF
 The api accepts form-encoded input and gives json-encoded output. Each api call requires a parameter 'action', which determines what will happen:
 
 | Action | Extra parameters     | Description                                                                         |
+| ------ | -------------------- | ------------------------------------------------------------------------------------|
 | solve  | board, serialization | Gives a sequence of moves that solves the provided board.                           |
 | draw   | board, serialization | Gives an ascii-representation of the provided board.                                |
 | fetch  | id                   | Takes an id and turns it into a board if possible. Currently only supports ids that completely encode a board. |
