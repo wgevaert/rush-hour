@@ -1,10 +1,10 @@
 <?php
 
-namespace RushHour\Models;
+namespace RushHour\Config;
 
 use RuntimeException;
 
-class Config
+class FileConfig implements Config
 {
     private array $config = [];
 
