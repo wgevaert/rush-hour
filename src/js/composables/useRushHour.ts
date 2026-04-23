@@ -51,6 +51,13 @@ export interface BoardExchange {
     targetCar: BaseCar,
 }
 
+interface Rectangle {
+    startX: number,
+    endX: number,
+    startY: number,
+    endY: number,
+}
+
 export function useRushHour() {
     /* Board basics */
     const gridSizeX = ref<number>(6);
@@ -163,11 +170,11 @@ export function useRushHour() {
         targetCar.value = selectedCar.value;
     }
 
-    function getExitX() : number {
+    function getExitX(): number {
         return targetCar.value?.orientation === 'horizontal' ? 0 : targetCar.value?.x || 0;
     }
 
-    function getExitY() : number {
+    function getExitY(): number {
         return targetCar.value?.orientation === 'vertical' ? 0 : targetCar.value?.y || 0;
     }
 
@@ -236,7 +243,7 @@ export function useRushHour() {
             }
             if (!collides(carStart, newX, newY)) {
                 selectedCar.value.x = newX;
-                selectedCar.value.y = carStart.y;
+                selectedCar.value.y = newY;
             }
         }
     }
@@ -260,24 +267,30 @@ export function useRushHour() {
     }
 
     function getCells(car: Car) {
-        const result: { x: number; y: number }[] = [];
-        for (let x = 0; x < getCarLengthX(car); x++) {
-            for (let y = 0; y < getCarLengthY(car); y++) {
-                result.push({ x, y });
-            }
+        const betweenCells: Rectangle = {
+            startX: car.x,
+            endX: car.x + getCarLengthX(car),
+            startY: car.y,
+            endY: car.y + getCarLengthY(car),
         }
-        return result;
+        return getCellsBetween(betweenCells);
     }
 
     function getTrajectoryCells(car: BaseCar, newX: number, newY: number) {
-        const result: { x: number; y: number }[] = [];
-        const startX: number = Math.min(newX, car.x),
-            endX: number = Math.max(newX, car.x) + getCarLengthX(car),
-            startY: number = Math.min(newY, car.y),
-            endY: number = Math.max(newY, car.y) + getCarLengthY(car);
+        const betweenCells: Rectangle = {
+            startX: Math.min(newX, car.x),
+            endX: Math.max(newX, car.x) + getCarLengthX(car),
+            startY: Math.min(newY, car.y),
+            endY: Math.max(newY, car.y) + getCarLengthY(car),
+        };
 
-        for (let x = startX; x <= endX; x++) {
-            for (let y = startY; y <= endY; y++) {
+        return getCellsBetween(betweenCells);
+    }
+
+    function getCellsBetween(betweenCells: Rectangle) {
+        const result: { x: number; y: number }[] = [];
+        for (let x = betweenCells.startX; x < betweenCells.endX; x++) {
+            for (let y = betweenCells.startY; y < betweenCells.endY; y++) {
                 result.push({ x, y })
             }
         }
@@ -305,9 +318,13 @@ export function useRushHour() {
         }
         hasWon.value = false;
     }
-
     function clearBoard() {
-        if (!cars.value.size || window.confirm("Are you sure that you want to clear all cars from the board?")) {
+        clearBoardWithMessage()
+    }
+
+    function clearBoardWithMessage(confirmMessage?:string) {
+        confirmMessage ??= 'Are you sure that you want to clear all cars from the board?';
+        if (!cars.value.size || window.confirm(confirmMessage)) {
             cars.value = new Map();
             selectedCar.value = null;
             targetCar.value = null;
@@ -343,7 +360,7 @@ export function useRushHour() {
             saveLoadMessage.value = 'Could not load board';
             return;
         }
-        clearBoard();
+        clearBoardWithMessage("Are you sure you want to replace the current puzzle with the imported puzzle?");
         initBoard(retrievedBoard);
     }
 
@@ -362,7 +379,7 @@ export function useRushHour() {
 
         for (const car of board.cars.values()) {
             cars.value.set(car.id, makeCar(car));
-            idCounter = Math.max(idCounter, car.id+1);
+            idCounter = Math.max(idCounter, car.id + 1);
         }
         targetCar.value = cars.value.get(board.targetCar.id) || null;
     }
