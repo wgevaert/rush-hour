@@ -4,7 +4,8 @@ namespace RushHour\Web;
 
 use RushHour\Exception\UserErrorException;
 use RushHour\Logger\FileLogger;
-use RushHour\Models\Config;
+use RushHour\Config\Config;
+use RushHour\Config\FileConfig;
 use RuntimeException;
 
 class Entrypoint
@@ -51,7 +52,7 @@ class Entrypoint
 
     private function addGeneralHeaders(Response $response): void
     {
-        $regexes = $this->getConfig()->get("cors-origins-regexps");
+        $regexes = $this->getConfig()->get("cors-origins-regexps") ?? [];
         if (!is_array($regexes)) {
             throw new RuntimeException("Invalid config value for cors-origins-regexps, expected array");
         }
@@ -74,7 +75,7 @@ class Entrypoint
     private function getConfig(): Config
     {
         if ($this->config === null) {
-            $this->config = new Config();
+            $this->config = new FileConfig();
         }
         return $this->config;
     }

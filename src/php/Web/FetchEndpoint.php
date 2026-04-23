@@ -15,19 +15,13 @@ class FetchEndpoint implements ApiEndpoint
     private Storage $storage;
 
     private string $id;
-    private string $fetchBy = 'id';
 
     public function setParameters(array $params): void
     {
-        if (isset($params['fetchBy'])) {
-            $this->fetchBy = $params['fetchBy'];
+        if (!isset($params['id'])) {
+            throw new UserErrorException("Parameter 'id' required to fetch board");
         }
-        if ($this->fetchBy === 'id') {
-            if (!isset($params['id'])) {
-                throw new UserErrorException("Parameter 'id' required when fetching board by ID");
-            }
-            $this->id = $params['id'];
-        }
+        $this->id = $params['id'];
     }
 
     public function setStorage(Storage $storage)
@@ -37,9 +31,6 @@ class FetchEndpoint implements ApiEndpoint
 
     public function execute(): array
     {
-        if ($this->fetchBy !== 'id') {
-            throw new UserErrorException("Unimplemented fetch board method");
-        }
         $board = $this->storage->fetchBoard($this->id);
         if ($board instanceof Board) {
             $serializer = new CarPositionBoardSerializer();

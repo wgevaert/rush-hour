@@ -3,6 +3,7 @@
 namespace RushHour\Cli;
 
 use RushHour\Logger\FileLogger;
+use RushHour\Exception\UserErrorException;
 
 class Entrypoint
 {
@@ -24,14 +25,18 @@ class Entrypoint
     public function run(): void
     {
         $this->parseArgs();
-        $this->getEndpoint()->run();
+        try {
+            $this->getEndpoint()->run();
+        } catch (UserErrorException $exception) {
+            $this->io->writeError($exception->getMessage());
+        }
     }
 
     private function parseArgs(): void
     {
         foreach ($this->argv as $arg) {
             if (str_starts_with($arg, "--")) {
-                $parts = explode("=", substr($arg, 2), 2);
+                $parts = explode("=", substr($arg, strlen("--")), 2);
                 $key = $parts[0];
                 $value = $parts[1] ?? true;
                 $this->options[$key] = $value;
@@ -48,7 +53,7 @@ class Entrypoint
     {
         $endpoint = match ($this->options['action'] ?? 'solve') {
             'solve' => new SolveEndpoint(),
-            default => new SolveEndpoint(),
+            default => throw new UserErrorException("Unknown action"),
         };
         $endpoint->setIo($this->io);
         $endpoint->setArgs($this->args);

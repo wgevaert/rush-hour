@@ -8,6 +8,7 @@ export async function fetchBoard(id?: string): Promise<BoardExchange | null> {
         const params: Record<string, string> = { action: 'fetchBoard' };
         if (id) {
             params.id = id;
+            // We also set the board in the URL, such that we start at the current puzzle again when page is reloaded.
             setUrlParam('board',id);
         }
         const response = await callApiEndpoint(params);
@@ -33,6 +34,7 @@ export async function postSaveBoard(
 
 function handleSaveResponse(response: any): string | null {
     if (response?.success && response?.id) {
+        // We also set the board in the URL, such that we start at the current puzzle again when the page is reloaded.
         setUrlParam('board',response.id);
         return response.id;
     }
@@ -69,10 +71,10 @@ function parseBoardString(boardString: string): BoardExchange {
 }
 
 /**
- * Mirrors the entire board if the exit is not placed in the top row or right column.
+ * Mirrors the entire board if the exit is not placed in the top row or left column.
  *
  * In the backend the exit can be anywhere on the border.
- * In the frontend the exit is always on the board in the top row or the right column, in line with the target car.
+ * In the frontend the exit is always on the board in the top row or the left column, in line with the target car.
  *
  * This function adjusts the cars on the board to make sure the exit is as required by the frontend,
  * or throws if this is not possible. 
@@ -146,6 +148,7 @@ function parseCars(carsString: string) {
             orientation: orientation == 'D' ? 'vertical' : 'horizontal',
         }
         cars.set(car.id, car);
+        // php backend uses the special car name 'r' to indicate the target car.
         if (name === 'r') {
             targetCarId = car.id
         }

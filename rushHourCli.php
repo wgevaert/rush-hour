@@ -13,4 +13,5 @@ $io->setInput(fopen("php://stdin", "r"));
 $io->setOutput(fopen("php://stdout", "w"));
 $io->setErrorOutput(fopen("php://stderr", "w"));
 $entrypoint->setIo($io);
+$entrypoint->setArgv($argv);
 $entrypoint->run();

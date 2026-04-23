@@ -37,6 +37,10 @@ class BoardDrawingParser implements LoggerAwareInterface
 
     public function boardFromDrawing(string $drawing): Board
     {
+        $drawing = trim($drawing);
+        if (empty($drawing)) {
+            throw new SerializedException("Empty string provided as board drawing");
+        }
         $lines = explode("\n", $drawing);
         $this->lines = $this->addBorderIfMissing($lines);
         $sizeX = strlen($this->lines[0]) - 2;

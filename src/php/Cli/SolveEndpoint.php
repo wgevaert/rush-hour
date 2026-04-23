@@ -74,12 +74,13 @@ class SolveEndpoint implements CommandLineEndpoint
         $boardDrawer = new BoardDrawer();
         $moveSerializer = new MoveSerializer();
         $player = new Player($initialBoard);
+
         $this->io->writeLine("\nInitial board:");
         $this->io->writeLine($boardDrawer->draw($initialBoard));
+
         foreach ($solution as $move) {
             $player->makeMove($move);
-            $board = $player->getBoard();
-            $boardString = $boardDrawer->draw($board);
+            $boardString = $boardDrawer->draw($player->getBoard());
 
             $this->io->writeLine("\nMove: " . $moveSerializer->serializeMove($move));
             $this->io->writeLine($boardString);

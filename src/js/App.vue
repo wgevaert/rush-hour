@@ -125,6 +125,7 @@ function getMoveColor(move: Move): string {
 const saveLoadModal = ref<HTMLDialogElement|null>(null);
 
 function showSaveLoadModal() {
+  saveLoadInput.value = "";
   saveLoadModal.value?.showModal();
 }
 
