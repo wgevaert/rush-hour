@@ -19,7 +19,7 @@ class FileLogger implements LoggerInterface
 {
     use LoggerTrait;
 
-    private int $logLevel;
+    private int $logLevel = 0;
 
     public function __construct(
         private ?ContextSerializer $serializer = null,
@@ -27,8 +27,9 @@ class FileLogger implements LoggerInterface
         $this->serializer ??= new ContextSerializer();
     }
 
-    public function setLogLevel(string $logLevel) {
+    public function setLogLevel(string $logLevel): self {
         $this->logLevel = $this->logLevelToInt($logLevel);
+        return $this;
     }
 
     private function logLevelToInt(string $logLevel) {

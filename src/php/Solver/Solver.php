@@ -7,6 +7,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use RushHour\Models\Board;
 use RushHour\Models\Move;
+use RushHour\Hasher\BoardHasher;
 use RushHour\Exception\UnsolvableException;
 
 /**

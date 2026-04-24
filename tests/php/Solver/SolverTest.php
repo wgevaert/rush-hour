@@ -12,7 +12,7 @@ use RushHour\Models\Move;
 use RushHour\Models\MoveDirection;
 use RushHour\Exception\UnsolvableException;
 use RushHour\Serialization\BoardDrawingParser;
-use RushHour\Solver\CarPositionBoardHasher;
+use RushHour\Hasher\TernaryBoardHasher;
 use RushHour\Solver\Player;
 use RushHour\Solver\Solver;
 
@@ -102,7 +102,7 @@ class SolverTest extends TestCase
     private function getSolver(Board $board): Solver
     {
         $solver = new Solver($board);
-        $solver->setHasher(new CarPositionBoardHasher());
+        $solver->setHasher(new TernaryBoardHasher());
         return $solver;
     }
 

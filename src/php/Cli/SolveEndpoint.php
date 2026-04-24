@@ -7,12 +7,12 @@ use RushHour\Exception\UnsolvableException;
 use RushHour\Exception\UserErrorException;
 use RushHour\Models\Board;
 use RushHour\Models\Move;
-use RushHour\Solver\CarPositionBoardHasher;
+use RushHour\Hasher\HasherFactory;
 use RushHour\Solver\Player;
+use RushHour\Solver\Solver;
 use RushHour\Serialization\BoardDrawingParser;
 use RushHour\Serialization\BoardDrawer;
 use RushHour\Serialization\MoveSerializer;
-use RushHour\Solver\Solver;
 
 class SolveEndpoint implements CommandLineEndpoint
 {
@@ -41,7 +41,7 @@ class SolveEndpoint implements CommandLineEndpoint
     {
         $board = $this->readBoard();
         $solver = new Solver($board);
-        $solver->setHasher(new CarPositionBoardHasher());
+        $solver->setHasher(HasherFactory::getBestHasher($board));
         if ($this->logger !== null) {
             $solver->setLogger($this->logger);
         }

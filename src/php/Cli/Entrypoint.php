@@ -58,7 +58,7 @@ class Entrypoint
         $endpoint->setIo($this->io);
         $endpoint->setArgs($this->args);
         $endpoint->setOptions($this->options);
-        $endpoint->setLogger(new FileLogger());
+        $endpoint->setLogger((new FileLogger)->setLogLevel('error'));
         return $endpoint;
     }
 }

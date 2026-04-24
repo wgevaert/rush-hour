@@ -1,6 +1,6 @@
 <?php
 
-namespace RushHour\Solver;
+namespace RushHour\Hasher;
 
 use RushHour\Models\Board;
 

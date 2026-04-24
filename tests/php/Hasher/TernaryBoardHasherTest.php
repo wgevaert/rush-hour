@@ -1,14 +1,14 @@
 <?php
 
-namespace RushHour\Test\Solver;
+namespace RushHour\Test\Hasher;
 
 use PHPUnit\Framework\TestCase;
 use RushHour\Models\Board;
 use RushHour\Models\Car;
 use RushHour\Models\Coordinate;
-use RushHour\Solver\CarPositionBoardHasher;
+use RushHour\Hasher\TernaryBoardHasher;
 
-class CarPositionBoardHasherTest extends TestCase
+class TernaryBoardHasherTest extends TestCase
 {
     public function testHashBoard(): void
     {
@@ -18,8 +18,8 @@ class CarPositionBoardHasherTest extends TestCase
         $board->addCar(new Car(new Coordinate(5, 2)), 'M');
         $board->addCar(new Car(new Coordinate(2, 2)), 'A');
 
-        $hasher = new CarPositionBoardHasher();
+        $hasher = new TernaryBoardHasher();
         $hash = $hasher->hashBoard($board);
-        $this->assertSame("A2,2K2,3L1,1M5,2", $hash);
+        $this->assertSame("0200aa00a80006000000000000000000000000000000", bin2hex($hash));
     }
 }

@@ -5,7 +5,7 @@ namespace RushHour\Web;
 use RushHour\Exception\UnsolvableException;
 use RushHour\Models\Board;
 use RushHour\Models\Move;
-use RushHour\Solver\CarPositionBoardHasher;
+use RushHour\Hasher\HasherFactory;
 use RushHour\Serialization\MoveSerializer;
 use RushHour\Solver\Solver;
 
@@ -14,7 +14,7 @@ class SolveEndpoint extends BoardEndpoint
     public function execute(): array
     {
         $solver = new Solver($this->board);
-        $solver->setHasher(new CarPositionBoardHasher());
+        $solver->setHasher(HasherFactory::getBestHasher($this->board));
         if ($this->logger !== null) {
             $solver->setLogger($this->logger);
         }
