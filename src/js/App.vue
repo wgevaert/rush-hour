@@ -91,9 +91,10 @@
           rx="10"
           @mousedown="startDrag($event, car)"
           @click="selectCar(car)"
-          :stroke="getStroke(car)"
+          :stroke="getCarStroke(car)"
           stroke-width="4"
           :opacity="car.hidden?0.5:1"
+          :style="{cursor:getCarCursor(car)}"
         />
       </g>
 
@@ -109,20 +110,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRushHour, type Car, type Move, getCarLengthX, getCarLengthY } from "@/composables/useRushHour";
-
-function getStroke(car: Car): string {
-  if (targetCar.value && targetCar.value.id === car.id) {
-    return selectedCar.value?.id === car.id ? "red" : "darkred";
-  }
-  return selectedCar.value?.id === car.id ? "black" : "none";
-}
-
-function getMoveColor(move: Move): string {
-  if (cars.value.has(move.car)) {
-    return cars.value.get(move.car)!.color;
-  }
-  return 'grey';
-}
 
 const saveLoadModal = ref<HTMLDialogElement|null>(null);
 
@@ -148,6 +135,27 @@ function onSaveLoadModalClick(event: PointerEvent) {
   if (!isInDialog) {
     closeSaveLoadModal();
   }
+}
+
+function getCarStroke(car: Car): string {
+  if (targetCar.value && targetCar.value.id === car.id) {
+    return selectedCar.value?.id === car.id ? "red" : "darkred";
+  }
+  return selectedCar.value?.id === car.id ? "black" : "none";
+}
+
+function getMoveColor(move: Move): string {
+  if (cars.value.has(move.car)) {
+    return cars.value.get(move.car)!.color;
+  }
+  return 'grey';
+}
+
+function getCarCursor(car: Car): string {
+  if ( carDragStart.value?.id === car.id ) {
+    return 'grabbing';
+  }
+  return 'grab';
 }
 
 function svgMargin() {
@@ -203,6 +211,7 @@ const {
   shortenSelectedCar,
   makeSelectedTarget,
   startDrag,
+  carDragStart,
   startResize,
   dismissWin,
   resetBoard,

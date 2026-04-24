@@ -1,7 +1,8 @@
 import { ref, computed, type Ref } from "vue";
-import { fetchSolution } from "@/composables/solveApi"
-import { fetchBoard, postSaveBoard } from "@/composables/boardApi"
+import { fetchSolution } from "@/composables/solveApi";
+import { fetchBoard, postSaveBoard } from "@/composables/boardApi";
 import { getUrlParam } from "@/composables/httpApi";
+import { collides } from "@/composables/collisionCheck";
 
 export type CarOrientation = "horizontal" | "vertical";
 export type MoveDirection = "up" | "right" | "down" | "left";
@@ -238,74 +239,27 @@ export function useRushHour() {
         const maxX = gridSizeX.value - getCarLengthX(carStart);
         const maxY = gridSizeY.value - getCarLengthY(carStart);
 
-        let newX = Math.max(0, Math.min(maxX, carStart.x + dx));
-        let newY = Math.max(0, Math.min(maxY, carStart.y + dy));
+        const newPos: Coordinate = {
+            x: Math.max(0, Math.min(maxX, carStart.x + dx)),
+            y: Math.max(0, Math.min(maxY, carStart.y + dy)),
+        }
 
         if (editMode.value) {
             // No collision checks in edit mode
-            selectedCar.value.x = newX;
-            selectedCar.value.y = newY;
+            selectedCar.value.x = newPos.x;
+            selectedCar.value.y = newPos.y;
         } else {
             // In play mode, only move the car in the allowed direction
             if (carStart.orientation === "horizontal") {
-                newY = carStart.y;
+                newPos.y = carStart.y;
             } else {
-                newX = carStart.x;
+                newPos.x = carStart.x;
             }
-            if (!collides(carStart, newX, newY)) {
-                selectedCar.value.x = newX;
-                selectedCar.value.y = newY;
-            }
-        }
-    }
-
-    function collides(car: BaseCar, newX: number, newY: number): boolean {
-        const carTrajectoryCells = getTrajectoryCells(car, newX, newY);
-        for (const other of cars.value.values()) {
-            if (other.id === car.id) continue;
-
-            const otherCells = getCells(other);
-
-            for (const c1 of carTrajectoryCells) {
-                for (const c2 of otherCells) {
-                    if (c1.x === c2.x && c1.y === c2.y) {
-                        return true;
-                    }
-                }
+            if (!collides(carStart, newPos, cars.value.values())) {
+                selectedCar.value.x = newPos.x;
+                selectedCar.value.y = newPos.y;
             }
         }
-        return false;
-    }
-
-    function getCells(car: Car) {
-        const betweenCells: Rectangle = {
-            startX: car.x,
-            endX: car.x + getCarLengthX(car),
-            startY: car.y,
-            endY: car.y + getCarLengthY(car),
-        }
-        return getCellsBetween(betweenCells);
-    }
-
-    function getTrajectoryCells(car: BaseCar, newX: number, newY: number) {
-        const betweenCells: Rectangle = {
-            startX: Math.min(newX, car.x),
-            endX: Math.max(newX, car.x) + getCarLengthX(car),
-            startY: Math.min(newY, car.y),
-            endY: Math.max(newY, car.y) + getCarLengthY(car),
-        };
-
-        return getCellsBetween(betweenCells);
-    }
-
-    function getCellsBetween(betweenCells: Rectangle) {
-        const result: { x: number; y: number }[] = [];
-        for (let x = betweenCells.startX; x < betweenCells.endX; x++) {
-            for (let y = betweenCells.startY; y < betweenCells.endY; y++) {
-                result.push({ x, y })
-            }
-        }
-        return result;
     }
 
     function startResize(event: MouseEvent) {
@@ -336,14 +290,43 @@ export function useRushHour() {
     }
 
     function stopResize() {
+        window.removeEventListener("mousemove", onResize);
+        window.removeEventListener("mouseup", stopResize);
+
+        if (warnForHiddenCars()) {
+            removeHiddenCars();
+        } else {
+            showHiddenCars();
+            resetResize();
+        }
+    }
+
+    function warnForHiddenCars(): boolean {
+        for (const car of cars.value.values()) {
+            if (car.hidden) {
+                return window.confirm("Resizing the board will delete some cars. Resize anyways?")
+            }
+        }
+        return true;
+    }
+
+    function removeHiddenCars() {
         for (const car of cars.value.values()) {
             if (car.hidden) {
                 removeCar(car);
             }
         }
+    }
 
-        window.removeEventListener("mousemove", onResize);
-        window.removeEventListener("mouseup", stopResize);
+    function showHiddenCars() {
+        for (const car of cars.value.values()) {
+            car.hidden = false;
+        }
+    }
+
+    function resetResize() {
+        gridSizeX.value = resizeGridSizeStart.value.x;
+        gridSizeY.value = resizeGridSizeStart.value.y;
     }
 
     function resizeBoardFromStartByDisplacement(gridSizeStart: Coordinate, dx: number, dy: number) {
@@ -439,6 +422,8 @@ export function useRushHour() {
         }
         saveLoadInput.value = board;
         await loadBoard();
+        // Start with playing a puzzle.
+        toggleEditMode();
     }
 
     function initBoard(board: BoardExchange): void {
@@ -632,6 +617,7 @@ export function useRushHour() {
         shortenSelectedCar,
         makeSelectedTarget,
         startDrag,
+        carDragStart,
         startResize,
         dismissWin,
         resetBoard,
