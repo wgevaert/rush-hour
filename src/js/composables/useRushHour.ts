@@ -6,10 +6,20 @@ import { getUrlParam } from "@/composables/httpApi";
 export type CarOrientation = "horizontal" | "vertical";
 export type MoveDirection = "up" | "right" | "down" | "left";
 
-export interface BaseCar {
+export interface Rectangle {
+    startX: number,
+    endX: number,
+    startY: number,
+    endY: number,
+}
+
+export interface Coordinate {
+    x: number,
+    y: number
+}
+
+export interface BaseCar extends Coordinate {
     id: number;
-    x: number;
-    y: number;
     length: number;
     orientation: CarOrientation;
 }
@@ -17,6 +27,7 @@ export interface BaseCar {
 export interface Car extends BaseCar {
     originalX: number;
     originalY: number;
+    hidden: boolean;
     color: string;
 }
 
@@ -51,13 +62,6 @@ export interface BoardExchange {
     targetCar: BaseCar,
 }
 
-interface Rectangle {
-    startX: number,
-    endX: number,
-    startY: number,
-    endY: number,
-}
-
 export function useRushHour() {
     /* Board basics */
     const gridSizeX = ref<number>(6);
@@ -83,8 +87,11 @@ export function useRushHour() {
     let solveAbortController: AbortController | null = null;
     let idCounter = 1;
 
-    const dragStart = ref({ x: 0, y: 0 });
+    const resizeStart: Ref<Coordinate> = ref({ x: 0, y: 0 });
+    const resizeGridSizeStart: Ref<Coordinate> = ref({ x: gridSizeX.value, y: gridSizeY.value });
+    const dragStart: Ref<Coordinate> = ref({ x: 0, y: 0 });
     const carDragStart: Ref<BaseCar | null> = ref(null);
+
     const saveLoadInput: Ref<string> = ref("");
 
     const cells = computed(() => {
@@ -136,11 +143,15 @@ export function useRushHour() {
 
     function removeSelectedCar() {
         if (!selectedCar.value) return;
-        cars.value.delete(selectedCar.value.id);
-        if (targetCar.value?.id === selectedCar.value.id) {
+        removeCar(selectedCar.value);
+        selectedCar.value = null;
+    }
+
+    function removeCar(car: Car) {
+        cars.value.delete(car.id);
+        if (targetCar.value?.id === car.id) {
             targetCar.value = null;
         }
-        selectedCar.value = null;
     }
 
     function rotateSelectedCar() {
@@ -297,6 +308,63 @@ export function useRushHour() {
         return result;
     }
 
+    function startResize(event: MouseEvent) {
+        // Allowing resize when solving the puzzle would allow cheating
+        // So we don't allow dragging in that case.
+        if (!editMode.value) return;
+
+        resizeStart.value = {
+            x: event.clientX,
+            y: event.clientY,
+        };
+        resizeGridSizeStart.value = {
+            x: gridSizeX.value,
+            y: gridSizeY.value,
+        };
+
+        window.addEventListener("mousemove", onResize);
+        window.addEventListener("mouseup", stopResize);
+    }
+
+    function onResize(event: MouseEvent) {
+        if (!resizeStart.value || !resizeGridSizeStart.value) return;
+
+        const dx = Math.round((event.clientX - resizeStart.value.x) / cellSize.value);
+        const dy = Math.round((event.clientY - resizeStart.value.y) / cellSize.value);
+
+        resizeBoardFromStartByDisplacement(resizeGridSizeStart.value, dx, dy);
+    }
+
+    function stopResize() {
+        for (const car of cars.value.values()) {
+            if (car.hidden) {
+                removeCar(car);
+            }
+        }
+
+        window.removeEventListener("mousemove", onResize);
+        window.removeEventListener("mouseup", stopResize);
+    }
+
+    function resizeBoardFromStartByDisplacement(gridSizeStart: Coordinate, dx: number, dy: number) {
+
+        let newX = Math.max(0, gridSizeStart.x + dx);
+        let newY = Math.max(0, gridSizeStart.y + dy);
+
+        gridSizeX.value = newX;
+        gridSizeY.value = newY;
+
+        for (const car of cars.value.values()) {
+            const carX = car.x + getCarLengthX(car) - 1;
+            const carY = car.y + getCarLengthY(car) - 1;
+            if (carX >= newX || carY >= newY) {
+                car.hidden = true;
+            } else {
+                car.hidden = false;
+            }
+        }
+    }
+
     function checkWin() {
         if (!targetCar.value) {
             hasWon.value = false;
@@ -322,7 +390,7 @@ export function useRushHour() {
         clearBoardWithMessage()
     }
 
-    function clearBoardWithMessage(confirmMessage?:string) {
+    function clearBoardWithMessage(confirmMessage?: string) {
         confirmMessage ??= 'Are you sure that you want to clear all cars from the board?';
         if (!cars.value.size || window.confirm(confirmMessage)) {
             cars.value = new Map();
@@ -389,6 +457,7 @@ export function useRushHour() {
             ...car,
             originalX: car.x,
             originalY: car.y,
+            hidden: false,
             color: getColor(car.id),
         };
     }
@@ -563,6 +632,7 @@ export function useRushHour() {
         shortenSelectedCar,
         makeSelectedTarget,
         startDrag,
+        startResize,
         dismissWin,
         resetBoard,
         clearBoard,

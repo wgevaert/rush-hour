@@ -93,12 +93,14 @@
           @click="selectCar(car)"
           :stroke="getStroke(car)"
           stroke-width="4"
+          :opacity="car.hidden?0.5:1"
         />
       </g>
 
       <!-- OUTLINE -->
       <g>
         <path :d="outlinePath"  fill="none" stroke="#888" opacity="0.5" :stroke-width="2*svgMargin()" stroke-linecap="square"/>
+        <rect :x="boardSizeX" :y="boardSizeY" :width="svgMargin()" :height="svgMargin()" @mousedown="startResize($event)" :style="{cursor:editMode ? 'nwse-resize' : 'not-allowed'}"/>
       </g>
     </svg>
   </div>
@@ -152,7 +154,7 @@ function svgMargin() {
   return 0.08*cellSize.value;
 }
 const svgWidth = computed(() => boardSizeX.value+2*svgMargin())
-const svgHeight = computed(() => boardSizeX.value+2*svgMargin())
+const svgHeight = computed(() => boardSizeY.value+2*svgMargin())
 const viewBox = computed(() => {
   return `${-1*svgMargin()} ${-1*svgMargin()} ${svgWidth.value} ${svgHeight.value}`
 });
@@ -201,6 +203,7 @@ const {
   shortenSelectedCar,
   makeSelectedTarget,
   startDrag,
+  startResize,
   dismissWin,
   resetBoard,
   clearBoard,
