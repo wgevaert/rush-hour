@@ -2,6 +2,8 @@
 
 namespace RushHour\Web;
 
+use Psr\Log\LoggerInterface;
+use Psr\Log\LogLLevel;
 use RushHour\Exception\UserErrorException;
 use RushHour\Logger\FileLogger;
 use RushHour\Config\Config;
@@ -67,9 +69,13 @@ class Entrypoint
         }
     }
 
-    private function getLogger(): FileLogger
+    private function getLogger(): LoggerInterface
     {
-        return new FileLogger();
+        $logger = new FileLogger();
+        $logger->setLogLevel(
+            $this->getConfig()->get('log-level') ?? LogLevel::DEBUG
+        );
+        return $logger;
     }
 
     private function getConfig(): Config

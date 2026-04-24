@@ -4,6 +4,7 @@ namespace RushHour\Logger;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;
+use Psr\Log\LogLevel;
 use RushHour\Models\Board;
 use RushHour\Models\Move;
 use RushHour\Serialization\BoardDrawer;
@@ -18,10 +19,30 @@ class FileLogger implements LoggerInterface
 {
     use LoggerTrait;
 
+    private int $logLevel;
+
     public function __construct(
         private ?ContextSerializer $serializer = null,
     ) {
         $this->serializer ??= new ContextSerializer();
+    }
+
+    public function setLogLevel(string $logLevel) {
+        $this->logLevel = $this->logLevelToInt($logLevel);
+    }
+
+    private function logLevelToInt(string $logLevel) {
+        return match ($logLevel) {
+            LogLevel::EMERGENCY => 7,
+            LogLevel::ALERT     => 6,
+            LogLevel::CRITICAL  => 5,
+            LogLevel::ERROR     => 4,
+            LogLevel::WARNING   => 3,
+            LogLevel::NOTICE    => 2,
+            LogLevel::INFO      => 1,
+            LogLevel::DEBUG     => 0,
+            default => 0,
+        };
     }
 
     /**
@@ -31,6 +52,9 @@ class FileLogger implements LoggerInterface
      */
     public function log($level, string|Stringable $message, array $context = []): void
     {
+        if ($this->logLevelToInt($level) < $this->logLevel) {
+            return;
+        }
         file_put_contents(
             __DIR__ . "/../../../../LOGFILE",
             $this->formatLogLine($level, (string) $message, $context),
