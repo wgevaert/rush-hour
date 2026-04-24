@@ -1,12 +1,12 @@
 <?php
 
-namespace RushHour\Test\Services;
+namespace RushHour\Test\Solver;
 
 use PHPUnit\Framework\TestCase;
 use RushHour\Models\Board;
 use RushHour\Models\Car;
 use RushHour\Models\Coordinate;
-use RushHour\Services\CarPositionBoardHasher;
+use RushHour\Solver\CarPositionBoardHasher;
 
 class CarPositionBoardHasherTest extends TestCase
 {

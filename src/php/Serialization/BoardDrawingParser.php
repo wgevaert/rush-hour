@@ -9,7 +9,7 @@ use RushHour\Models\Board;
 use RushHour\Models\Car;
 use RushHour\Models\CarDirection;
 use RushHour\Models\Coordinate;
-use RushHour\Services\Player;
+use RushHour\Solver\Player;
 
 /**
  * Can make a Board instance from a drawn board

@@ -9,7 +9,7 @@ use RushHour\Serialization\BoardDrawer;
 use RushHour\Serialization\BoardDrawingParser;
 use RushHour\Serialization\BoardSerializer;
 use RushHour\Serialization\CarPositionBoardSerializer;
-use RushHour\Services\CarPositionBoardHasher;
+use RushHour\Solver\CarPositionBoardHasher;
 use RushHour\Serialization\DrawingBoardSerializer;
 
 abstract class BoardEndpoint implements ApiEndpoint

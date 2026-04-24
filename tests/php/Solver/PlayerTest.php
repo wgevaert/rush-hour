@@ -1,6 +1,6 @@
 <?php
 
-namespace RushHour\Test\Services;
+namespace RushHour\Test\Solver;
 
 use PHPUnit\Framework\TestCase;
 use RushHour\Models\Board;
@@ -10,7 +10,7 @@ use RushHour\Models\Coordinate;
 use RushHour\Models\Move;
 use RushHour\Models\MoveDirection;
 use RushHour\Serialization\BoardDrawingParser;
-use RushHour\Services\Player;
+use RushHour\Solver\Player;
 
 class PlayerTest extends TestCase
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace RushHour\Services;
+namespace RushHour\Solver;
 
 use RushHour\Models\Board;
 

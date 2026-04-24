@@ -1,6 +1,6 @@
 <?php
 
-namespace RushHour\Test\Services;
+namespace RushHour\Test\Solver;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -12,9 +12,9 @@ use RushHour\Models\Move;
 use RushHour\Models\MoveDirection;
 use RushHour\Exception\UnsolvableException;
 use RushHour\Serialization\BoardDrawingParser;
-use RushHour\Services\CarPositionBoardHasher;
-use RushHour\Services\Player;
-use RushHour\Services\Solver;
+use RushHour\Solver\CarPositionBoardHasher;
+use RushHour\Solver\Player;
+use RushHour\Solver\Solver;
 
 class SolverTest extends TestCase
 {

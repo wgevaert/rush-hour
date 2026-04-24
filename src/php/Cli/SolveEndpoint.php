@@ -7,12 +7,12 @@ use RushHour\Exception\UnsolvableException;
 use RushHour\Exception\UserErrorException;
 use RushHour\Models\Board;
 use RushHour\Models\Move;
-use RushHour\Services\CarPositionBoardHasher;
-use RushHour\Services\Player;
+use RushHour\Solver\CarPositionBoardHasher;
+use RushHour\Solver\Player;
 use RushHour\Serialization\BoardDrawingParser;
 use RushHour\Serialization\BoardDrawer;
 use RushHour\Serialization\MoveSerializer;
-use RushHour\Services\Solver;
+use RushHour\Solver\Solver;
 
 class SolveEndpoint implements CommandLineEndpoint
 {

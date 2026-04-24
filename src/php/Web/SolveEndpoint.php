@@ -5,9 +5,9 @@ namespace RushHour\Web;
 use RushHour\Exception\UnsolvableException;
 use RushHour\Models\Board;
 use RushHour\Models\Move;
-use RushHour\Services\CarPositionBoardHasher;
+use RushHour\Solver\CarPositionBoardHasher;
 use RushHour\Serialization\MoveSerializer;
-use RushHour\Services\Solver;
+use RushHour\Solver\Solver;
 
 class SolveEndpoint extends BoardEndpoint
 {

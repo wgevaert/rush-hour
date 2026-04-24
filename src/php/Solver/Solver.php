@@ -1,6 +1,6 @@
 <?php
 
-namespace RushHour\Services;
+namespace RushHour\Solver;
 
 use LogicException;
 use Psr\Log\LoggerAwareInterface;
